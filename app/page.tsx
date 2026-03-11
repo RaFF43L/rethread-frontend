@@ -1,65 +1,138 @@
-import Image from "next/image";
+import { Suspense } from 'react';
+import { produtosService } from '@/features/produtos/services/produtos.service';
+import { ProdutosList } from '@/features/produtos/components/ProdutosList';
+import { Pagination } from '@/shared/components/Pagination';
+import { ProductsHeader } from '@/features/produtos/components/ProductsHeader';
+import { Button } from '@/shared/components/ui/button';
+import { Shield } from 'lucide-react';
 
-export default function Home() {
+interface PageProps {
+  searchParams: Promise<{ page?: string; limit?: string; q?: string }>;
+}
+
+async function ProdutosPageContent({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const page = Number(params.page) || 1;
+  const limit = Number(params.limit) || 12;
+  const query = params.q;
+
+  const { data: produtos, pagination } = await produtosService.getProdutos({
+    page,
+    limit,
+    q: query,
+  });
+
+  let filteredProdutos = produtos;
+  if (query) {
+    const searchTerm = query.toLowerCase();
+    filteredProdutos = produtos.filter(p => 
+      p.nome.toLowerCase().includes(searchTerm) ||
+      p.descricao?.toLowerCase().includes(searchTerm) ||
+      p.cor.toLowerCase().includes(searchTerm)
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <>
+      <ProductsHeader 
+        totalProducts={pagination.total} 
+        currentCount={filteredProdutos.length}
+      />
+      <ProdutosList produtos={filteredProdutos} />
+      {filteredProdutos.length > 0 && (
+        <Pagination
+          currentPage={pagination.page}
+          totalPages={pagination.totalPages}
+          basePath="/"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+      )}
+    </>
+  );
+}
+
+export default async function HomePage({ searchParams }: PageProps) {
+  return (
+    <div className="min-h-screen">
+      <header className="bg-white/95 border-b border-border sticky top-0 z-50 shadow-md backdrop-blur-md">
+        <div className="container mx-auto px-4 py-4 sm:py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <img 
+                src="/logo-segunda-aura.svg" 
+                alt="Segunda Aura Brechó" 
+                className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 drop-shadow-md"
+              />
+              <div className="flex flex-col">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-coral leading-tight tracking-tight drop-shadow-sm">
+                  Segunda Aura
+                </h1>
+                <p className="text-base sm:text-lg md:text-xl text-olive font-semibold tracking-wide">
+                  BRECHÓ
+                </p>
+              </div>
+            </div>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="border-coral text-coral hover:bg-coral hover:text-white transition-all shadow-sm"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <a href="/login">
+                <Shield className="w-4 h-4 mr-1" />
+                <span className="hidden sm:inline">Admin</span>
+              </a>
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      {/* Hero Section - Inspirado na etiqueta */}
+      <section className="relative bg-white/80 backdrop-blur-sm py-10 sm:py-14 md:py-20 overflow-hidden">
+        {/* Gradiente de fundo inspirado na borda da etiqueta */}
+        <div className="absolute inset-0 bg-gradient-to-r from-coral/10 via-cream to-olive/10 opacity-60"></div>
+        
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-coral drop-shadow-sm leading-tight">
+              Cada peça já teve uma história.
+            </h2>
+            <p className="text-2xl sm:text-3xl md:text-5xl font-light text-olive drop-shadow-sm">
+              Aqui começa outra.
+            </p>
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto pt-4">
+              Peças únicas de moda sustentável com a qualidade que você merece
+            </p>
+          </div>
         </div>
+      </section>
+
+      {/* Produtos */}
+      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+        <Suspense
+          fallback={
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-coral border-t-transparent"></div>
+            </div>
+          }
+        >
+          <ProdutosPageContent searchParams={searchParams} />
+        </Suspense>
       </main>
+
+      {/* Footer */}
+      <footer className="bg-olive text-white py-10 mt-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h3 className="text-2xl font-bold mb-2">Segunda Aura Brechó</h3>
+            <p className="text-cream-light mb-4">Sustentabilidade e estilo em cada peça</p>
+            <p className="text-sm text-cream-dark">
+              &copy; {new Date().getFullYear()} Segunda Aura Brechó. Todos os direitos reservados.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
+
+export const revalidate = 60; // Revalidar a cada 60 segundos
