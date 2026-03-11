@@ -1,0 +1,21 @@
+{
+  "name": "Segunda Aura Brechó",
+  "short_name": "Segunda Aura",
+  "description": "Moda sustentável e peças únicas de brechó",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F1E8",
+  "theme_color": "#D4988C",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo-segunda-aura.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["shopping", "lifestyle"],
+  "lang": "pt-BR",
+  "dir": "ltr"
+}
