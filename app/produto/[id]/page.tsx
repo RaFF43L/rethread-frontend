@@ -13,6 +13,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   
   try {
     const produto = await produtosService.getProdutoById(id);
+    const primeiraImagem = produto.imagens[0] || '/placeholder-product.svg';
 
     return {
       title: `${produto.nome} - R$ ${produto.preco.toFixed(2)} | Segunda Aura Brechó`,
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
         description: `💰 R$ ${produto.preco.toFixed(2)} • ${produto.cor} • ${produto.disponivel ? '✅ Disponível' : '❌ Indisponível'}`,
         images: [
           {
-            url: produto.imagem,
+            url: primeiraImagem,
             width: 1200,
             height: 630,
             alt: produto.nome,
@@ -35,7 +36,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
         card: 'summary_large_image',
         title: `${produto.nome} - Segunda Aura Brechó`,
         description: `R$ ${produto.preco.toFixed(2)} • ${produto.cor}`,
-        images: [produto.imagem],
+        images: [primeiraImagem],
       },
     };
   } catch {

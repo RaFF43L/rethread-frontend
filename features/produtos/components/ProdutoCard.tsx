@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import { MessageCircle, ExternalLink } from 'lucide-react';
-import { ProductImage } from '@/shared/components/ProductImage';
+import { ImageCarousel } from '@/shared/components/ImageCarousel';
 import { env } from '@/shared/lib/env';
 import Link from 'next/link';
 
@@ -31,21 +31,20 @@ export function ProdutoCard({ produto, whatsappNumber }: ProdutoCardProps) {
   return (
     <Card className="card-gradient overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col h-full">
       <Link href={`/produto/${produto.id}`} className="relative h-56 sm:h-64 w-full overflow-hidden flex-shrink-0 block">
-        <ProductImage
-          src={produto.imagem}
+        <ImageCarousel
+          images={produto.imagens}
           alt={produto.nome}
           className="group-hover:scale-105 transition-transform duration-300"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
         {!produto.disponivel && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm z-10">
             <Badge variant="destructive" className="text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2">
               Indisponível
             </Badge>
           </div>
         )}
         {produto.disponivel && (
-          <div className="absolute top-2 sm:top-3 right-2 sm:right-3">
+          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 z-10">
             <Badge variant="success" className="shadow-lg text-xs sm:text-sm">
               Disponível
             </Badge>

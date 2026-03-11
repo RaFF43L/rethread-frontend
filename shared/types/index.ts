@@ -1,16 +1,23 @@
+export interface ProductImage {
+  id: number;
+  urlS3: string;
+}
+
 export interface ProdutoBackend {
   id: number;
   codigoIdentificacao: string;
   cor: string;
   marca: string;
-  urlS3: string;
+  urlS3?: string;
+  images?: ProductImage[];
+  imageUrls?: string[];
   status: 'available' | 'unavailable';
   descricao: string;
   preco: string;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
-  imageUrl?: string; // URL pré-assinada do S3
+  imageUrl?: string;
 }
 
 export interface Produto {
@@ -19,7 +26,7 @@ export interface Produto {
   descricao: string;
   preco: number;
   cor: string;
-  imagem: string;
+  imagens: string[];
   categoria?: string;
   tamanho?: string;
   disponivel: boolean;

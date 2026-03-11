@@ -13,10 +13,21 @@ export interface GetProdutosParams {
 export class ProdutosService {
 
   private adaptProduto(produtoBackend: ProdutoBackend): Produto {
-    const imagemUrl = getImageUrl(
-      produtoBackend.imageUrl || produtoBackend.urlS3,
-      '/placeholder-product.svg'
-    );
+    let imagens: string[] = [];
+
+    if (produtoBackend.imageUrls && produtoBackend.imageUrls.length > 0) {
+      imagens = produtoBackend.imageUrls;
+    } else if (produtoBackend.images && produtoBackend.images.length > 0) {
+      imagens = produtoBackend.images.map(img => 
+        getImageUrl(img.urlS3, '/placeholder-product.svg')
+      );
+    } else if (produtoBackend.imageUrl) {
+      imagens = [produtoBackend.imageUrl];
+    } else if (produtoBackend.urlS3) {
+      imagens = [getImageUrl(produtoBackend.urlS3, '/placeholder-product.svg')];
+    } else {
+      imagens = ['/placeholder-product.svg'];
+    }
 
     return {
       id: produtoBackend.codigoIdentificacao,
@@ -24,7 +35,7 @@ export class ProdutosService {
       descricao: produtoBackend.descricao,
       preco: parseFloat(produtoBackend.preco),
       cor: produtoBackend.cor,
-      imagem: imagemUrl,
+      imagens,
       disponivel: produtoBackend.status === 'available',
       createdAt: produtoBackend.createdAt,
       updatedAt: produtoBackend.updatedAt,

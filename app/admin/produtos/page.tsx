@@ -79,7 +79,7 @@ export default async function AdminProdutosPage({ searchParams }: PageProps) {
                       <div className="flex items-center">
                         <div className="relative h-10 w-10 flex-shrink-0">
                           <Image
-                            src={produto.imagem}
+                            src={produto.imagens[0] || '/placeholder-product.svg'}
                             alt={produto.nome}
                             fill
                             className="rounded object-cover"
