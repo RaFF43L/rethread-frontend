@@ -17,24 +17,23 @@ export const env = {
  * Chame esta função no início da aplicação
  */
 export function validateEnv() {
-  const requiredVars = [
-    'NEXT_PUBLIC_API_URL',
-    'NEXT_PUBLIC_WHATSAPP_NUMBER',
-  ];
-
-  const missing = requiredVars.filter(
-    (varName) => !process.env[varName]
-  );
-
-  if (missing.length > 0 && env.isProduction) {
-    throw new Error(
-      `Missing required environment variables in production: ${missing.join(', ')}`
-    );
+  if (!env.isProduction) {
+    return;
   }
 
-  if (missing.length > 0 && env.isDevelopment) {
-    console.warn(
-      `⚠️  Missing environment variables (using defaults): ${missing.join(', ')}`
+  const validations = [
+    { key: 'apiUrl', value: env.apiUrl, name: 'NEXT_PUBLIC_API_URL' },
+    { key: 'whatsappNumber', value: env.whatsappNumber, name: 'NEXT_PUBLIC_WHATSAPP_NUMBER' },
+  ];
+
+  const missingOrDefault = validations.filter(v => 
+    v.value === 'http://localhost:3001' || 
+    v.value === '5511999999999'
+  );
+
+  if (missingOrDefault.length > 0) {
+    console.error(
+      `⚠️  Production environment using default values: ${missingOrDefault.map(v => v.name).join(', ')}`
     );
   }
 }
@@ -74,8 +73,4 @@ export function getImageUrl(imageUrl?: string, fallback?: string): string {
   }
 
   return `${env.apiUrl}/${imageUrl}`;
-}
-
-if (typeof window !== 'undefined' && env.isProduction) {
-  validateEnv();
 }
