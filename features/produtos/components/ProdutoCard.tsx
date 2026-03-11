@@ -7,6 +7,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import { MessageCircle, ExternalLink } from 'lucide-react';
 import { ProductImage } from '@/shared/components/ProductImage';
+import { env } from '@/shared/lib/env';
 import Link from 'next/link';
 
 interface ProdutoCardProps {
@@ -16,7 +17,7 @@ interface ProdutoCardProps {
 
 export function ProdutoCard({ produto, whatsappNumber }: ProdutoCardProps) {
   const handleWhatsAppClick = () => {
-    const productUrl = `${window.location.origin}/produto/${produto.id}`;
+    const productUrl = `${env.appUrl}/produto/${produto.id}`;
     
     const message = getWhatsAppMessageText({
       nome: produto.nome,

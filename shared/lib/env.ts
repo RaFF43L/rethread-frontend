@@ -1,5 +1,8 @@
 export const env = {
   apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  appUrl: process.env.NEXT_PUBLIC_APP_URL || 
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000')),
   whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999',
   authCookieName: process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'segunda_aura_token',
   appName: process.env.NEXT_PUBLIC_APP_NAME || 'Segunda Aura Brechó',
