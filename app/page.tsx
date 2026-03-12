@@ -5,7 +5,8 @@ import { Pagination } from '@/shared/components/Pagination';
 import { CategoryCarousel } from '@/features/produtos/components/CategoryCarousel';
 import { FilterSidebar } from '@/features/produtos/components/FilterSidebar';
 import Link from 'next/link';
-import { Shield } from 'lucide-react';
+import { Shield, Home, Grid2x2, MessageCircle } from 'lucide-react';
+import { env } from '@/shared/lib/env';
 
 interface PageProps {
   searchParams: Promise<{ page?: string; limit?: string; q?: string; categoria?: string; tamanho?: string }>;
@@ -99,7 +100,7 @@ export default async function HomePage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-[#E8E0D5] sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -123,7 +124,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       </header>
 
       {/* Layout principal */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 flex-1">
         <div className="lg:flex lg:gap-10">
 
           {/* Sidebar - apenas desktop */}
@@ -156,8 +157,8 @@ export default async function HomePage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-[#E8E0D5] bg-white py-10 mt-16">
+      {/* Footer - apenas desktop */}
+      <footer className="hidden lg:block border-t border-[#E8E0D5] bg-white py-10">
         <div className="container mx-auto px-4 text-center">
           <p
             className="text-lg font-semibold text-foreground mb-1"
@@ -171,6 +172,38 @@ export default async function HomePage({ searchParams }: PageProps) {
           </p>
         </div>
       </footer>
+
+      {/* Bottom Nav - apenas mobile */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#E8E0D5] pb-safe">
+        <div className="flex items-center justify-around h-16">
+          <Link
+            href="/"
+            className="flex flex-col items-center gap-1 text-[#A0522D] px-4"
+          >
+            <Home className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Início</span>
+          </Link>
+          <Link
+            href="/?categoria="
+            className="flex flex-col items-center gap-1 text-muted-foreground px-4 hover:text-[#A0522D] transition-colors"
+          >
+            <Grid2x2 className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Categorias</span>
+          </Link>
+          <a
+            href={`https://wa.me/${env.whatsappNumber}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center gap-1 text-muted-foreground px-4 hover:text-[#25D366] transition-colors"
+          >
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-[10px] font-medium">WhatsApp</span>
+          </a>
+        </div>
+      </nav>
+
+      {/* Espaço para o bottom nav no mobile */}
+      <div className="h-16 lg:hidden" />
     </div>
   );
 }
