@@ -1,13 +1,20 @@
 import { apiClient } from '@/shared/lib/api-client';
-import { Produto, PaginatedResponse, ProdutoBackend, BackendPaginatedResponse } from '@/shared/types';
-import { getImageUrl, isS3Image } from '@/shared/lib/env';
+import { Produto, PaginatedResponse, ProdutoBackend, BackendPaginatedResponse, CategoryGroup } from '@/shared/types';
+import { getImageUrl } from '@/shared/lib/env';
 
 export interface GetProdutosParams {
   page?: number;
   limit?: number;
-  categoria?: string;
+}
+
+export interface GetProdutosFilterParams {
+  size?: string;
   cor?: string;
-  q?: string; 
+  marca?: string;
+  precoMin?: number;
+  precoMax?: number;
+  page?: number;
+  limit?: number;
 }
 
 export class ProdutosService {
@@ -36,26 +43,66 @@ export class ProdutosService {
       preco: parseFloat(produtoBackend.preco),
       cor: produtoBackend.cor,
       imagens,
+      categoria: produtoBackend.category,
+      tamanho: produtoBackend.size,
       disponivel: produtoBackend.status === 'available',
       createdAt: produtoBackend.createdAt,
       updatedAt: produtoBackend.updatedAt,
     };
   }
 
-  async getProdutos(params: GetProdutosParams = {}): Promise<PaginatedResponse<Produto>> {
+  async getCategorias(): Promise<CategoryGroup[]> {
+    return apiClient.get<CategoryGroup[]>('/products/categories');
+  }
+
+  async getProdutosByCategoria(categoria: string, params: { page?: number; limit?: number } = {}): Promise<PaginatedResponse<Produto>> {
     const searchParams = new URLSearchParams();
-    
     if (params.page) searchParams.append('page', params.page.toString());
     if (params.limit) searchParams.append('limit', params.limit.toString());
-    if (params.categoria) searchParams.append('categoria', params.categoria);
-    if (params.cor) searchParams.append('cor', params.cor);
-    if (params.q) searchParams.append('q', params.q);
+    const query = searchParams.toString();
+    const endpoint = `/products/categories/${categoria}${query ? `?${query}` : ''}`;
+    const response = await apiClient.get<BackendPaginatedResponse<ProdutoBackend>>(endpoint);
+    return {
+      data: response.data.map(p => this.adaptProduto(p)),
+      pagination: {
+        page: response.page,
+        limit: response.limit,
+        total: response.total,
+        totalPages: Math.ceil(response.total / response.limit),
+      },
+    };
+  }
 
+  async getProdutos(params: GetProdutosParams = {}): Promise<PaginatedResponse<Produto>> {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.limit) searchParams.append('limit', params.limit.toString());
     const query = searchParams.toString();
     const endpoint = `/products${query ? `?${query}` : ''}`;
-
     const response = await apiClient.get<BackendPaginatedResponse<ProdutoBackend>>(endpoint);
+    return {
+      data: response.data.map(p => this.adaptProduto(p)),
+      pagination: {
+        page: response.page,
+        limit: response.limit,
+        total: response.total,
+        totalPages: Math.ceil(response.total / response.limit),
+      },
+    };
+  }
 
+  async getProdutosFiltered(params: GetProdutosFilterParams = {}): Promise<PaginatedResponse<Produto>> {
+    const searchParams = new URLSearchParams();
+    if (params.size) searchParams.append('size', params.size);
+    if (params.cor) searchParams.append('cor', params.cor);
+    if (params.marca) searchParams.append('marca', params.marca);
+    if (params.precoMin !== undefined) searchParams.append('precoMin', params.precoMin.toString());
+    if (params.precoMax !== undefined) searchParams.append('precoMax', params.precoMax.toString());
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.limit) searchParams.append('limit', params.limit.toString());
+    const query = searchParams.toString();
+    const endpoint = `/products/filter${query ? `?${query}` : ''}`;
+    const response = await apiClient.get<BackendPaginatedResponse<ProdutoBackend>>(endpoint);
     return {
       data: response.data.map(p => this.adaptProduto(p)),
       pagination: {

@@ -8,6 +8,8 @@ export interface ProdutoBackend {
   codigoIdentificacao: string;
   cor: string;
   marca: string;
+  category?: string;
+  size?: string;
   urlS3?: string;
   images?: ProductImage[];
   imageUrls?: string[];
@@ -18,6 +20,11 @@ export interface ProdutoBackend {
   updatedAt: string;
   deletedAt: string | null;
   imageUrl?: string;
+}
+
+export interface CategoryGroup {
+  category: string;
+  products: ProdutoBackend[];
 }
 
 export interface Produto {
