@@ -29,11 +29,20 @@ export const metadata: Metadata = {
     siteName: "Segunda Aura Brechó",
     type: "website",
     locale: "pt_BR",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Segunda Aura Brechó - Moda Sustentável",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Segunda Aura Brechó",
     description: "Peças únicas de moda sustentável com estilo.",
+    images: ["/opengraph-image"],
   },
   appleWebApp: {
     capable: true,
