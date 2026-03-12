@@ -4,8 +4,9 @@ import { ProdutosList } from '@/features/produtos/components/ProdutosList';
 import { Pagination } from '@/shared/components/Pagination';
 import { CategoryCarousel } from '@/features/produtos/components/CategoryCarousel';
 import { FilterSidebar } from '@/features/produtos/components/FilterSidebar';
+import { MobileBottomNav } from '@/features/produtos/components/MobileBottomNav';
 import Link from 'next/link';
-import { Shield, Home, Grid2x2, MessageCircle } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { env } from '@/shared/lib/env';
 
 interface PageProps {
@@ -174,33 +175,12 @@ export default async function HomePage({ searchParams }: PageProps) {
       </footer>
 
       {/* Bottom Nav - apenas mobile */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#E8E0D5] pb-safe">
-        <div className="flex items-center justify-around h-16">
-          <Link
-            href="/"
-            className="flex flex-col items-center gap-1 text-[#A0522D] px-4"
-          >
-            <Home className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Início</span>
-          </Link>
-          <Link
-            href="/?categoria="
-            className="flex flex-col items-center gap-1 text-muted-foreground px-4 hover:text-[#A0522D] transition-colors"
-          >
-            <Grid2x2 className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Categorias</span>
-          </Link>
-          <a
-            href={`https://wa.me/${env.whatsappNumber}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex flex-col items-center gap-1 text-muted-foreground px-4 hover:text-[#25D366] transition-colors"
-          >
-            <MessageCircle className="w-5 h-5" />
-            <span className="text-[10px] font-medium">WhatsApp</span>
-          </a>
-        </div>
-      </nav>
+      <MobileBottomNav
+        categories={categoryItems}
+        selectedCategory={params.categoria}
+        selectedSize={params.tamanho}
+        whatsappNumber={env.whatsappNumber}
+      />
 
       {/* Espaço para o bottom nav no mobile */}
       <div className="h-16 lg:hidden" />
