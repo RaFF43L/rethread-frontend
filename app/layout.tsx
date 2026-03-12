@@ -22,6 +22,19 @@ export const metadata: Metadata = {
   title: "Segunda Aura Brechó - Moda Sustentável",
   description: "Peças únicas de moda sustentável com estilo. Encontre roupas de qualidade no melhor brechó.",
   manifest: "/manifest.json",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://brecho.segundaaura.com.br'),
+  openGraph: {
+    title: "Segunda Aura Brechó - Moda Sustentável",
+    description: "Peças únicas de moda sustentável com estilo. Encontre roupas de qualidade no melhor brechó.",
+    siteName: "Segunda Aura Brechó",
+    type: "website",
+    locale: "pt_BR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Segunda Aura Brechó",
+    description: "Peças únicas de moda sustentável com estilo.",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
