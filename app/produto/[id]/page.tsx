@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { produtosService } from '@/features/produtos/services/produtos.service';
 import { ProdutoCard } from '@/features/produtos/components/ProdutoCard';
 import { env } from '@/shared/lib/env';
+import { formatWhatsAppLink, getWhatsAppMessageText } from '@/shared/utils/format';
+import { MessageCircle } from 'lucide-react';
 import type { Metadata } from 'next';
 
 interface ProductPageProps {
@@ -87,6 +89,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
           produto={produto} 
           whatsappNumber={env.whatsappNumber}
         />
+
+        {produto.disponivel && (
+          <a
+            href={formatWhatsAppLink(
+              env.whatsappNumber,
+              `${getWhatsAppMessageText({ nome: produto.nome, preco: produto.preco })}\n\n${env.appUrl}/produto/${produto.id}`
+            )}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold transition-colors text-base"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Chamar no WhatsApp
+          </a>
+        )}
 
         <div className="mt-6 text-center">
           <a 
