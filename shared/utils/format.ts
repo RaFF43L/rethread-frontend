@@ -16,8 +16,15 @@ export function formatWhatsAppLink(phoneNumber: string, message: string): string
  * Gera mensagem de texto para WhatsApp (SEM link de imagem)
  * Usado quando compartilhamos imagem como arquivo anexo
  */
-export function getWhatsAppMessageText(produto: { nome: string; preco: number }): string {
-  return `Olá! Tenho interesse neste produto:\n\n📦 *${produto.nome}*\n💰 ${formatPrice(produto.preco)}`;
+export function getWhatsAppMessageText(produto: { nome: string; preco: number; tamanho?: string }): string {
+  const linhas = [
+    `Ola! Tenho interesse neste produto:`,
+    ``,
+    `*${produto.nome}*`,
+    `R$ ${produto.preco.toFixed(2).replace('.', ',')}`,
+  ];
+  if (produto.tamanho) linhas.push(`Tamanho: ${produto.tamanho}`);
+  return linhas.join('\n');
 }
 
 /**

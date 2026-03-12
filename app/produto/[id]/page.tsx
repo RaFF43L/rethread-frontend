@@ -18,11 +18,15 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     const primeiraImagem = produto.imagens[0] || '/placeholder-product.svg';
 
     return {
-      title: `${produto.nome} - R$ ${produto.preco.toFixed(2)} | Segunda Aura Brechó`,
-      description: produto.descricao || `${produto.nome} - ${produto.cor}`,
+      title: `${produto.nome} - Segunda Aura Brechó`,
+      description: produto.descricao || `${produto.nome} - R$ ${produto.preco.toFixed(2).replace('.', ',')}`,
       openGraph: {
         title: `${produto.nome} - Segunda Aura Brechó`,
-        description: `💰 R$ ${produto.preco.toFixed(2)} • ${produto.cor} • ${produto.disponivel ? '✅ Disponível' : '❌ Indisponível'}`,
+        description: [
+          `R$ ${produto.preco.toFixed(2).replace('.', ',')}`,
+          produto.tamanho ? `Tamanho ${produto.tamanho}` : null,
+          produto.disponivel ? 'Disponivel' : 'Indisponivel',
+        ].filter(Boolean).join(' · '),
         images: [
           {
             url: primeiraImagem,
@@ -32,12 +36,12 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
           },
         ],
         type: 'website',
-        siteName: 'Segunda Aura Brechó',
+        siteName: 'Segunda Aura Brecho',
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${produto.nome} - Segunda Aura Brechó`,
-        description: `R$ ${produto.preco.toFixed(2)} • ${produto.cor}`,
+        title: `${produto.nome} - Segunda Aura Brecho`,
+        description: `R$ ${produto.preco.toFixed(2).replace('.', ',')}${produto.tamanho ? ` · Tamanho ${produto.tamanho}` : ''}`,
         images: [primeiraImagem],
       },
     };
@@ -94,7 +98,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <a
             href={formatWhatsAppLink(
               env.whatsappNumber,
-              `${getWhatsAppMessageText({ nome: produto.nome, preco: produto.preco })}\n\n${env.appUrl}/produto/${produto.id}`
+              `${getWhatsAppMessageText({ nome: produto.nome, preco: produto.preco, tamanho: produto.tamanho })}\n\n${env.appUrl}/produto/${produto.id}`
             )}
             target="_blank"
             rel="noopener noreferrer"
