@@ -1,138 +1,178 @@
-import { Suspense } from 'react';
+﻿import { Suspense } from 'react';
 import { produtosService } from '@/features/produtos/services/produtos.service';
 import { ProdutosList } from '@/features/produtos/components/ProdutosList';
 import { Pagination } from '@/shared/components/Pagination';
-import { ProductsHeader } from '@/features/produtos/components/ProductsHeader';
-import { Button } from '@/shared/components/ui/button';
+import { CategoryCarousel } from '@/features/produtos/components/CategoryCarousel';
+import { FilterSidebar } from '@/features/produtos/components/FilterSidebar';
+import Link from 'next/link';
 import { Shield } from 'lucide-react';
 
 interface PageProps {
-  searchParams: Promise<{ page?: string; limit?: string; q?: string }>;
+  searchParams: Promise<{ page?: string; limit?: string; q?: string; categoria?: string; tamanho?: string }>;
 }
+
+const CATEGORY_LABELS: Record<string, string> = {
+  calca: 'Calças',
+  blusa: 'Blusas',
+  camiseta: 'Camisetas',
+  short: 'Shorts',
+  vestido: 'Vestidos',
+};
 
 async function ProdutosPageContent({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const limit = Number(params.limit) || 12;
   const query = params.q;
+  const categoria = params.categoria;
+  const tamanho = params.tamanho;
 
-  const { data: produtos, pagination } = await produtosService.getProdutos({
-    page,
-    limit,
-    q: query,
-  });
+  let produtos;
+  let pagination;
 
+  if (tamanho) {
+    // Usa /products/filter com o size correto (API não suporta category+size juntos)
+    ({ data: produtos, pagination } = await produtosService.getProdutosFiltered({ size: tamanho, page, limit }));
+  } else if (categoria) {
+    ({ data: produtos, pagination } = await produtosService.getProdutosByCategoria(categoria, { page, limit }));
+  } else {
+    ({ data: produtos, pagination } = await produtosService.getProdutos({ page, limit }));
+  }
+
+  // Busca por texto é client-side (API não tem endpoint de busca full-text)
   let filteredProdutos = produtos;
   if (query) {
     const searchTerm = query.toLowerCase();
-    filteredProdutos = produtos.filter(p => 
+    filteredProdutos = produtos.filter(p =>
       p.nome.toLowerCase().includes(searchTerm) ||
       p.descricao?.toLowerCase().includes(searchTerm) ||
       p.cor.toLowerCase().includes(searchTerm)
     );
   }
 
+  const title = tamanho
+    ? `Tamanho ${tamanho}`
+    : categoria
+    ? (CATEGORY_LABELS[categoria] || categoria)
+    : query
+    ? `"${query}"`
+    : 'Todas as peças';
+
   return (
     <>
-      <ProductsHeader 
-        totalProducts={pagination.total} 
-        currentCount={filteredProdutos.length}
-      />
-      <ProdutosList produtos={filteredProdutos} />
-      {filteredProdutos.length > 0 && (
-        <Pagination
-          currentPage={pagination.page}
-          totalPages={pagination.totalPages}
-          basePath="/"
-        />
+      <div className="flex items-baseline justify-between mb-5">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {filteredProdutos.length} {filteredProdutos.length === 1 ? 'peça' : 'peças'}
+          </p>
+        </div>
+      </div>
+
+      {filteredProdutos.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="text-muted-foreground">Nenhuma peça encontrada</p>
+        </div>
+      ) : (
+        <>
+          <ProdutosList produtos={filteredProdutos} />
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            basePath="/"
+          />
+        </>
       )}
     </>
   );
 }
 
 export default async function HomePage({ searchParams }: PageProps) {
+  const params = await searchParams;
+
+  let categoryItems: { category: string; count: number }[] = [];
+  try {
+    const categorias = await produtosService.getCategorias();
+    categoryItems = categorias.map(c => ({ category: c.category, count: c.products.length }));
+  } catch {
+    // falha silenciosa se endpoint de categorias indisponÃ­vel
+  }
+
   return (
     <div className="min-h-screen">
-      <header className="bg-white/95 border-b border-border sticky top-0 z-50 shadow-md backdrop-blur-md">
-        <div className="container mx-auto px-4 py-4 sm:py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 sm:gap-6">
-              <img 
-                src="/logo-segunda-aura.svg" 
-                alt="Segunda Aura Brechó" 
-                className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 drop-shadow-md"
-              />
-              <div className="flex flex-col">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-coral leading-tight tracking-tight drop-shadow-sm">
-                  Segunda Aura
-                </h1>
-                <p className="text-base sm:text-lg md:text-xl text-olive font-semibold tracking-wide">
-                  BRECHÓ
-                </p>
-              </div>
-            </div>
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="border-coral text-coral hover:bg-coral hover:text-white transition-all shadow-sm"
+      {/* Header */}
+      <header className="bg-white border-b border-[#E8E0D5] sticky top-0 z-50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <img src="/logo-segunda-aura.svg" alt="Segunda Aura" className="w-10 h-10" />
+            <span
+              className="text-3xl font-bold tracking-tight"
+              style={{ fontFamily: 'var(--font-playfair, Georgia, serif)', fontStyle: 'italic', color: '#A0522D' }}
             >
-              <a href="/login">
-                <Shield className="w-4 h-4 mr-1" />
-                <span className="hidden sm:inline">Admin</span>
-              </a>
-            </Button>
-          </div>
+              Segunda Aura
+            </span>
+          </Link>
+          <Link
+            href="/login"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground border border-[#E8E0D5] px-3 py-1.5 rounded-lg hover:bg-muted transition-colors"
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Admin</span>
+          </Link>
         </div>
       </header>
 
-      {/* Hero Section - Inspirado na etiqueta */}
-      <section className="relative bg-white/80 backdrop-blur-sm py-10 sm:py-14 md:py-20 overflow-hidden">
-        {/* Gradiente de fundo inspirado na borda da etiqueta */}
-        <div className="absolute inset-0 bg-gradient-to-r from-coral/10 via-cream to-olive/10 opacity-60"></div>
-        
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
-            <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-coral drop-shadow-sm leading-tight">
-              Cada peça já teve uma história.
-            </h2>
-            <p className="text-2xl sm:text-3xl md:text-5xl font-light text-olive drop-shadow-sm">
-              Aqui começa outra.
-            </p>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto pt-4">
-              Peças únicas de moda sustentável com a qualidade que você merece
-            </p>
+      {/* Layout principal */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="lg:flex lg:gap-10">
+
+          {/* Sidebar - apenas desktop */}
+          <aside className="hidden lg:block w-52 flex-shrink-0">
+            <div className="sticky top-24">
+              <FilterSidebar
+                categories={categoryItems}
+                selectedCategory={params.categoria}
+                selectedSize={params.tamanho}
+              />
+            </div>
+          </aside>
+
+          {/* ConteÃºdo principal */}
+          <div className="flex-1 min-w-0">
+            {/* Categorias (strip horizontal) */}
+            <CategoryCarousel categories={categoryItems} selectedCategory={params.categoria} />
+
+            {/* Produtos */}
+            <Suspense
+              fallback={
+                <div className="flex justify-center py-20">
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#A0522D] border-t-transparent" />
+                </div>
+              }
+            >
+              <ProdutosPageContent searchParams={searchParams} />
+            </Suspense>
           </div>
         </div>
-      </section>
-
-      {/* Produtos */}
-      <main className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
-        <Suspense
-          fallback={
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-coral border-t-transparent"></div>
-            </div>
-          }
-        >
-          <ProdutosPageContent searchParams={searchParams} />
-        </Suspense>
-      </main>
+      </div>
 
       {/* Footer */}
-      <footer className="bg-olive text-white py-10 mt-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h3 className="text-2xl font-bold mb-2">Segunda Aura Brechó</h3>
-            <p className="text-cream-light mb-4">Sustentabilidade e estilo em cada peça</p>
-            <p className="text-sm text-cream-dark">
-              &copy; {new Date().getFullYear()} Segunda Aura Brechó. Todos os direitos reservados.
-            </p>
-          </div>
+      <footer className="border-t border-[#E8E0D5] bg-white py-10 mt-16">
+        <div className="container mx-auto px-4 text-center">
+          <p
+            className="text-lg font-semibold text-foreground mb-1"
+            style={{ fontFamily: 'var(--font-playfair, Georgia, serif)', fontStyle: 'italic' }}
+          >
+            Segunda Aura Brechó
+          </p>
+          <p className="text-sm text-muted-foreground">Sustentabilidade e estilo em cada peça</p>
+          <p className="text-xs text-muted-foreground mt-4">
+            &copy; {new Date().getFullYear()} Segunda Aura Brechó. Todos os direitos reservados.
+          </p>
         </div>
       </footer>
     </div>
   );
 }
 
-export const revalidate = 60; // Revalidar a cada 60 segundos
+export const revalidate = 60;

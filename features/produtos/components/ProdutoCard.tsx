@@ -1,112 +1,53 @@
-'use client';
+﻿'use client';
 
 import { Produto } from '@/shared/types';
-import { formatPrice, formatWhatsAppLink, getWhatsAppMessageText } from '@/shared/utils/format';
-import { Card, CardContent, CardFooter } from '@/shared/components/ui/card';
-import { Button } from '@/shared/components/ui/button';
-import { Badge } from '@/shared/components/ui/badge';
-import { MessageCircle, ExternalLink } from 'lucide-react';
+import { formatPrice } from '@/shared/utils/format';
 import { ImageCarousel } from '@/shared/components/ImageCarousel';
-import { env } from '@/shared/lib/env';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface ProdutoCardProps {
   produto: Produto;
   whatsappNumber: string;
 }
 
-export function ProdutoCard({ produto, whatsappNumber }: ProdutoCardProps) {
-  const handleWhatsAppClick = () => {
-    const productUrl = `${env.appUrl}/produto/${produto.id}`;
-    
-    const message = getWhatsAppMessageText({
-      nome: produto.nome,
-      preco: produto.preco,
-    }) + `\n\n${productUrl}`;
-    
-    const link = formatWhatsAppLink(whatsappNumber, message);
-    window.open(link, '_blank');
-  };
+export function ProdutoCard({ produto }: ProdutoCardProps) {
+  const router = useRouter();
 
   return (
-    <Card className="card-gradient overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col h-full">
-      <Link href={`/produto/${produto.id}`} className="relative h-56 sm:h-64 w-full overflow-hidden flex-shrink-0 block">
-        <ImageCarousel
-          images={produto.imagens}
-          alt={produto.nome}
-          className="group-hover:scale-105 transition-transform duration-300"
-        />
+    <div
+      className="bg-white rounded-2xl overflow-hidden border-2 border-transparent hover:border-[#A0522D] transition-all duration-300 hover:shadow-xl hover:scale-[1.03] flex flex-col h-full cursor-pointer"
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest('button')) return;
+        router.push(`/produto/${produto.id}`);
+      }}
+    >
+      <div className="relative overflow-hidden aspect-[3/4] bg-stone-50">
+        <ImageCarousel images={produto.imagens} alt={produto.nome} />
+
         {!produto.disponivel && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm z-10">
-            <Badge variant="destructive" className="text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2">
-              Indisponível
-            </Badge>
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
+            <span className="bg-black/70 text-white text-[10px] tracking-widest px-3 py-1 rounded-full uppercase">
+              Indisponivel
+            </span>
           </div>
         )}
-        {produto.disponivel && (
-          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 z-10">
-            <Badge variant="success" className="shadow-lg text-xs sm:text-sm">
-              Disponível
-            </Badge>
-          </div>
-        )}
-      </Link>
-      
-      <CardContent className="p-3 sm:p-4 space-y-2 sm:space-y-3 flex-1 flex flex-col">
-        <h3 className="text-lg sm:text-xl font-semibold text-foreground line-clamp-1">
+      </div>
+
+      <div className="px-3 pt-3 pb-3 flex flex-col gap-1.5">
+        <h3 className="text-[13px] font-bold uppercase tracking-[0.12em] text-foreground leading-tight line-clamp-1">
           {produto.nome}
         </h3>
-        
-        {produto.descricao && (
-          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
-            {produto.descricao}
-          </p>
-        )}
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs sm:text-sm text-muted-foreground">Cor:</span>
-          <div className="flex items-center gap-2">
-            <div
-              className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-border shadow-sm"
-              style={{ backgroundColor: produto.cor.toLowerCase() }}
-              title={produto.cor}
-            />
-            <Badge variant="outline" className="font-medium text-xs sm:text-sm">
-              {produto.cor}
-            </Badge>
-          </div>
-        </div>
+        <span className="text-lg font-bold" style={{ color: '#A0522D' }}>
+          {formatPrice(produto.preco)}
+        </span>
 
-        <div className="pt-1 sm:pt-2 mt-auto">
-          <span className="text-2xl sm:text-3xl font-bold text-primary">
-            {formatPrice(produto.preco)}
+        {produto.tamanho && (
+          <span className="inline-block self-start text-[11px] font-medium text-muted-foreground border border-[#E8E0D5] rounded-full px-2.5 py-0.5">
+            {produto.tamanho}
           </span>
-        </div>
-      </CardContent>
-
-      <CardFooter className="p-3 sm:p-4 pt-0 flex-col gap-2">
-        <Button
-          onClick={handleWhatsAppClick}
-          disabled={!produto.disponivel}
-          className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white shadow-md text-sm sm:text-base"
-          size="lg"
-        >
-          <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-          Chamar no WhatsApp
-        </Button>
-        
-        <Button
-          asChild
-          variant="outline"
-          className="w-full text-xs sm:text-sm"
-          size="sm"
-        >
-          <Link href={`/produto/${produto.id}`}>
-            <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
-            Ver detalhes
-          </Link>
-        </Button>
-      </CardFooter>
-    </Card>
+        )}
+      </div>
+    </div>
   );
 }

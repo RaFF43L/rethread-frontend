@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ProductImage } from '@/shared/components/ProductImage';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/shared/components/ui/button';
 
 interface ImageCarouselProps {
   images: string[];
@@ -23,22 +22,15 @@ export function ImageCarousel({
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const minSwipeDistance = 50;
+  const hasMultiple = images.length > 1;
 
   const goToPrevious = useCallback(() => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex === 0 ? images.length - 1 : prevIndex - 1
-    );
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   }, [images.length]);
 
   const goToNext = useCallback(() => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex === images.length - 1 ? 0 : prevIndex + 1
-    );
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   }, [images.length]);
-
-  const goToSlide = useCallback((index: number) => {
-    setCurrentIndex(index);
-  }, []);
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
@@ -51,115 +43,76 @@ export function ImageCarousel({
 
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
     const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe) {
-      goToNext();
-    } else if (isRightSwipe) {
-      goToPrevious();
-    }
+    if (distance > minSwipeDistance) goToNext();
+    else if (distance < -minSwipeDistance) goToPrevious();
   };
 
   useEffect(() => {
+    if (!hasMultiple) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') goToPrevious();
       if (e.key === 'ArrowRight') goToNext();
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goToPrevious, goToNext]);
+  }, [goToPrevious, goToNext, hasMultiple]);
 
-  if (images.length === 0) {
-    return (
-      <div className={`relative ${className}`}>
-        <ProductImage
-          src="/placeholder-product.svg"
-          alt={alt}
-          priority={priority}
-        />
-      </div>
-    );
-  }
-
-  if (images.length === 1) {
-    return (
-      <div className={`relative ${className}`}>
-        <ProductImage
-          src={images[0]}
-          alt={alt}
-          priority={priority}
-        />
-      </div>
-    );
-  }
+  const src = images.length === 0 ? '/placeholder-product.svg' : images[currentIndex];
 
   return (
-    <div 
-      className={`relative group ${className}`}
+    <div
+      className={`relative w-full h-full ${className}`}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
       <ProductImage
-        src={images[currentIndex]}
-        alt={`${alt} - Imagem ${currentIndex + 1} de ${images.length}`}
+        src={src}
+        alt={hasMultiple ? `${alt} - ${currentIndex + 1} de ${images.length}` : alt}
         priority={priority}
       />
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          goToPrevious();
-        }}
-        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
-        aria-label="Imagem anterior"
-      >
-        <ChevronLeft className="w-5 h-5" />
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          goToNext();
-        }}
-        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
-        aria-label="Próxima imagem"
-      >
-        <ChevronRight className="w-5 h-5" />
-      </Button>
-
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/30 backdrop-blur-sm rounded-full px-2 py-1">
-        {images.map((_, index) => (
+      {hasMultiple && (
+        <>
           <button
-            key={index}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              goToSlide(index);
-            }}
-            className={`w-2 h-2 rounded-full transition-all ${
-              index === currentIndex 
-                ? 'bg-white w-6' 
-                : 'bg-white/50 hover:bg-white/75'
-            }`}
-            aria-label={`Ir para imagem ${index + 1}`}
-          />
-        ))}
-      </div>
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToPrevious(); }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-white/80 hover:bg-white rounded-full shadow-md z-30 cursor-pointer"
+            aria-label="Imagem anterior"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-800" />
+          </button>
 
-      <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
-        {currentIndex + 1} / {images.length}
-      </div>
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToNext(); }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-white/80 hover:bg-white rounded-full shadow-md z-30 cursor-pointer"
+            aria-label="Próxima imagem"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-800" />
+          </button>
+
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/30 rounded-full px-2 py-1 z-30">
+            {images.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrentIndex(index); }}
+                className={`h-2 rounded-full transition-all cursor-pointer ${
+                  index === currentIndex ? 'bg-white w-6' : 'bg-white/50 w-2 hover:bg-white/75'
+                }`}
+                aria-label={`Ir para imagem ${index + 1}`}
+              />
+            ))}
+          </div>
+
+          <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full z-30 pointer-events-none">
+            {currentIndex + 1} / {images.length}
+          </div>
+        </>
+      )}
     </div>
   );
 }
+

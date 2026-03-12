@@ -1,47 +1,47 @@
 @import "tailwindcss";
 
 :root {
-  /* Cores da Segunda Aura Brechó - Baseadas na etiqueta */
-  --background: #FAF8F3;
-  --foreground: #2D2D2D;
+  /* Segunda Aura - Paleta Premium */
+  --background: #F9F7F2;
+  --foreground: #1C1C1C;
   
-  /* Paleta de cores da marca - Tons mais vibrantes da etiqueta */
-  --coral: #D4786C;
-  --coral-light: #E89B8F;
-  --coral-dark: #C25F52;
+  /* Terracota */
+  --coral: #A0522D;
+  --coral-light: #C2703A;
+  --coral-dark: #7A3A1F;
   
-  --olive: #7A8F6A;
-  --olive-light: #95A885;
-  --olive-dark: #627554;
+  /* Verde Musgo */
+  --olive: #4A5D4E;
+  --olive-light: #6B7F6E;
+  --olive-dark: #2D3D30;
   
-  --cream: #FAF8F3;
+  --cream: #F9F7F2;
   --cream-light: #FFFFFF;
-  --cream-dark: #F0EDE5;
+  --cream-dark: #EDE8DF;
   
-  --accent: #D4786C;
+  --accent: #A0522D;
   --accent-foreground: #FFFFFF;
   
-  /* UI Colors */
   --card: #FFFFFF;
-  --card-foreground: #2D2D2D;
+  --card-foreground: #1C1C1C;
   
   --popover: #FFFFFF;
-  --popover-foreground: #2D2D2D;
+  --popover-foreground: #1C1C1C;
   
-  --primary: #D4786C;
+  --primary: #A0522D;
   --primary-foreground: #FFFFFF;
   
-  --secondary: #7A8F6A;
+  --secondary: #4A5D4E;
   --secondary-foreground: #FFFFFF;
   
-  --muted: #FAF8F3;
-  --muted-foreground: #6B7280;
+  --muted: #F3EFE8;
+  --muted-foreground: #7A7068;
   
-  --border: #E5DFD0;
-  --input: #E5DFD0;
-  --ring: #D4786C;
+  --border: #E8E0D5;
+  --input: #E8E0D5;
+  --ring: #A0522D;
   
-  --radius: 0.5rem;
+  --radius: 0.75rem;
 }
 
 @theme inline {
@@ -89,8 +89,7 @@
 /* Modo escuro desabilitado - usando apenas tema claro da Segunda Aura */
 
 body {
-  background: linear-gradient(135deg, #FAF8F3 0%, #F5EFE6 50%, #FAF8F3 100%);
-  background-attachment: fixed;
+  background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   min-height: 100vh;
@@ -103,23 +102,14 @@ body {
   body {
     @apply text-foreground;
   }
-  
-  /* Adicionar efeito de borda colorida nos cards */
-  .card-gradient {
-    position: relative;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
-  
-  .card-gradient::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 2px;
-    background: linear-gradient(135deg, #E89B8F, #D4786C, #7A8F6A);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-    opacity: 0.6;
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
