@@ -13,7 +13,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/shared/components/ui/alert-dialog';
-import { Loader2, Trash2, ShoppingBag, RotateCcw } from 'lucide-react';
+import { Loader2, Trash2, ShoppingBag, RotateCcw, Pencil } from 'lucide-react';
+import Link from 'next/link';
 
 interface ProdutoActionsProps {
   numericId: number;
@@ -81,6 +82,14 @@ export function ProdutoActions({ numericId, nome, disponivel }: ProdutoActionsPr
       ) : (
         <AlertDialog>
           <div className="flex items-center gap-1">
+            <Link
+              href={`/admin/produtos/${numericId}/edit`}
+              className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-50 px-2 py-1 rounded transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Editar
+            </Link>
+
             {disponivel ? (
               <AlertDialogTrigger asChild>
                 <button

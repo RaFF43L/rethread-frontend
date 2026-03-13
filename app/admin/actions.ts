@@ -87,3 +87,24 @@ export async function criarProduto(formData: FormData) {
   revalidatePath('/admin/produtos');
   redirect('/admin/produtos');
 }
+
+export async function atualizarProduto(id: number, formData: FormData) {
+  const token = await getToken();
+
+  const res = await fetch(`${env.apiUrl}/products/${id}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const msg = Array.isArray(err.message) ? err.message.join(', ') : (err.message || 'Erro ao atualizar produto');
+    throw new Error(msg);
+  }
+
+  revalidatePath('/admin/produtos');
+  redirect('/admin/produtos');
+}

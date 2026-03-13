@@ -133,6 +133,11 @@ export class ProdutosService {
     return this.adaptProduto(response);
   }
 
+  async getProdutoByNumericId(id: number): Promise<Produto> {
+    const response = await apiClient.get<ProdutoBackend>(`/products/${id}`);
+    return this.adaptProduto(response);
+  }
+
   async createProduto(produto: Omit<Produto, 'id' | 'createdAt' | 'updatedAt'>, token: string): Promise<Produto> {
     const response = await apiClient.withAuth(token).post<ProdutoBackend>('/products', produto);
     return this.adaptProduto(response);
