@@ -38,6 +38,7 @@ export class ProdutosService {
 
     return {
       id: produtoBackend.codigoIdentificacao,
+      numericId: produtoBackend.id,
       nome: produtoBackend.marca || 'Produto',
       descricao: produtoBackend.descricao,
       preco: parseFloat(produtoBackend.preco),
