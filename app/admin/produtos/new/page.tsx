@@ -1,12 +1,12 @@
 ﻿'use client';
 
-import { criarProduto } from '@/app/admin/actions';
+import { createProduct } from '@/app/admin/actions';
 import { ProductForm } from '@/features/admin/components/ProductForm';
 import { Button } from '@/shared/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function NovoProdutoPage() {
+export default function NewProductPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-3 mb-8">
@@ -22,7 +22,7 @@ export default function NovoProdutoPage() {
       </div>
 
       <ProductForm
-        onSubmitAction={criarProduto}
+        onSubmitAction={createProduct}
         submitLabel="Cadastrar Produto"
         submittingLabel="Cadastrando..."
       />

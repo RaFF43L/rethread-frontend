@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { produtosService } from '@/features/produtos/services/produtos.service';
+import { productsService } from '@/features/products/services/products.service';
 import { formatPrice } from '@/shared/utils/format';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
@@ -21,7 +21,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
   if (params.startDate) filters.startDate = params.startDate;
   if (params.endDate) filters.endDate = params.endDate;
 
-  const dashboard = await produtosService.getDashboard(filters);
+  const dashboard = await productsService.getDashboard(filters);
 
   const stats = [
     {

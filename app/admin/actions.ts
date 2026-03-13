@@ -14,7 +14,7 @@ async function getToken(): Promise<string> {
   return token;
 }
 
-export async function marcarComoVendido(id: number) {
+export async function markAsSold(id: number) {
   const token = await getToken();
   const res = await fetch(`${env.apiUrl}/products/${id}/sell`, {
     method: 'PATCH',
@@ -32,7 +32,7 @@ export async function marcarComoVendido(id: number) {
   revalidatePath('/admin/produtos');
 }
 
-export async function reverterVenda(id: number) {
+export async function revertSale(id: number) {
   const token = await getToken();
   const res = await fetch(`${env.apiUrl}/products/${id}/revert-sale`, {
     method: 'PATCH',
@@ -50,7 +50,7 @@ export async function reverterVenda(id: number) {
   revalidatePath('/admin/produtos');
 }
 
-export async function deletarProduto(id: number) {
+export async function deleteProduct(id: number) {
   const token = await getToken();
   const res = await fetch(`${env.apiUrl}/products/${id}`, {
     method: 'DELETE',
@@ -67,7 +67,7 @@ export async function deletarProduto(id: number) {
   revalidatePath('/admin/produtos');
 }
 
-export async function criarProduto(formData: FormData) {
+export async function createProduct(formData: FormData) {
   const token = await getToken();
 
   const res = await fetch(`${env.apiUrl}/products`, {
@@ -88,7 +88,7 @@ export async function criarProduto(formData: FormData) {
   redirect('/admin/produtos');
 }
 
-export async function atualizarProduto(id: number, formData: FormData) {
+export async function updateProduct(id: number, formData: FormData) {
   const token = await getToken();
 
   const res = await fetch(`${env.apiUrl}/products/${id}`, {

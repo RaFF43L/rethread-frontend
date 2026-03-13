@@ -1,19 +1,19 @@
 'use client';
 
-import { atualizarProduto } from '@/app/admin/actions';
+import { updateProduct } from '@/app/admin/actions';
 import { ProductForm } from '@/features/admin/components/ProductForm';
 import { Button } from '@/shared/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import type { Produto } from '@/shared/types';
+import type { Product } from '@/shared/types';
 
-interface EditProdutoClientProps {
-  produto: Produto;
+interface EditProductClientProps {
+  product: Product;
 }
 
-export function EditProdutoClient({ produto }: EditProdutoClientProps) {
+export function EditProductClient({ product }: EditProductClientProps) {
   const handleSubmit = async (formData: FormData) => {
-    await atualizarProduto(produto.numericId, formData);
+    await updateProduct(product.numericId, formData);
   };
 
   return (
@@ -26,20 +26,20 @@ export function EditProdutoClient({ produto }: EditProdutoClientProps) {
         </Button>
         <div>
           <h1 className="text-2xl font-bold">Editar Produto</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{produto.nome}</p>
+          <p className="text-muted-foreground text-sm mt-0.5">{product.name}</p>
         </div>
       </div>
 
       <ProductForm
         defaultValues={{
-          marca: produto.nome,
-          cor: produto.cor,
-          descricao: produto.descricao,
-          preco: produto.preco,
-          category: produto.categoria as any,
-          size: produto.tamanho as any,
+          marca: product.name,
+          cor: product.color,
+          descricao: product.description,
+          preco: product.price,
+          category: product.category as any,
+          size: product.size as any,
         }}
-        existingImages={produto.imagens}
+        existingImages={product.images}
         onSubmitAction={handleSubmit}
         submitLabel="Salvar Alterações"
         submittingLabel="Salvando..."

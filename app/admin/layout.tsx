@@ -1,5 +1,3 @@
-// Layout administrativo
-
 import { AdminNav } from '@/features/admin/components/AdminNav';
 
 export default function AdminLayout({

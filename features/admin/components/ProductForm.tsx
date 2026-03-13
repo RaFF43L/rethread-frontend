@@ -20,16 +20,16 @@ import { Upload, X, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-const CATEGORIAS = ['calca', 'blusa', 'camiseta', 'short', 'vestido'] as const;
-const TAMANHOS = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'Único'] as const;
+const CATEGORIES = ['calca', 'blusa', 'camiseta', 'short', 'vestido'] as const;
+const SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'Único'] as const;
 
 const schema = z.object({
   marca: z.string().min(1, 'Informe a marca'),
   cor: z.string().min(1, 'Informe a cor'),
   descricao: z.string().min(5, 'Descrição muito curta'),
   preco: z.number({ error: 'Informe um valor válido' }).positive('O preço deve ser maior que zero'),
-  category: z.enum(CATEGORIAS, { error: 'Selecione a categoria' }),
-  size: z.enum(TAMANHOS, { error: 'Selecione o tamanho' }),
+  category: z.enum(CATEGORIES, { error: 'Selecione a categoria' }),
+  size: z.enum(SIZES, { error: 'Selecione o tamanho' }),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -217,7 +217,7 @@ export function ProductForm({
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CATEGORIAS.map(c => (
+                      {CATEGORIES.map(c => (
                         <SelectItem key={c} value={c}>
                           {c.charAt(0).toUpperCase() + c.slice(1)}
                         </SelectItem>
@@ -238,7 +238,7 @@ export function ProductForm({
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
-                      {TAMANHOS.map(t => (
+                      {SIZES.map(t => (
                         <SelectItem key={t} value={t}>{t}</SelectItem>
                       ))}
                     </SelectContent>

@@ -1,10 +1,10 @@
 ﻿import { Suspense } from 'react';
-import { produtosService } from '@/features/produtos/services/produtos.service';
-import { ProdutosList } from '@/features/produtos/components/ProdutosList';
+import { productsService } from '@/features/products/services/products.service';
+import { ProductsList } from '@/features/products/components/ProductsList';
 import { Pagination } from '@/shared/components/Pagination';
-import { CategoryCarousel } from '@/features/produtos/components/CategoryCarousel';
-import { FilterSidebar } from '@/features/produtos/components/FilterSidebar';
-import { MobileBottomNav } from '@/features/produtos/components/MobileBottomNav';
+import { CategoryCarousel } from '@/features/products/components/CategoryCarousel';
+import { FilterSidebar } from '@/features/products/components/FilterSidebar';
+import { MobileBottomNav } from '@/features/products/components/MobileBottomNav';
 import Link from 'next/link';
 import { Shield } from 'lucide-react';
 import { env } from '@/shared/lib/env';
@@ -21,7 +21,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   vestido: 'Vestidos',
 };
 
-async function ProdutosPageContent({ searchParams }: PageProps) {
+async function ProductsPageContent({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const limit = Number(params.limit) || 12;
@@ -29,26 +29,24 @@ async function ProdutosPageContent({ searchParams }: PageProps) {
   const categoria = params.categoria;
   const tamanho = params.tamanho;
 
-  let produtos;
+  let products;
   let pagination;
 
   if (tamanho) {
-    // Usa /products/filter com o size correto (API não suporta category+size juntos)
-    ({ data: produtos, pagination } = await produtosService.getProdutosFiltered({ size: tamanho, page, limit }));
+    ({ data: products, pagination } = await productsService.getProductsFiltered({ size: tamanho, page, limit }));
   } else if (categoria) {
-    ({ data: produtos, pagination } = await produtosService.getProdutosByCategoria(categoria, { page, limit }));
+    ({ data: products, pagination } = await productsService.getProductsByCategory(categoria, { page, limit }));
   } else {
-    ({ data: produtos, pagination } = await produtosService.getProdutos({ page, limit }));
+    ({ data: products, pagination } = await productsService.getProducts({ page, limit }));
   }
 
-  // Busca por texto é client-side (API não tem endpoint de busca full-text)
-  let filteredProdutos = produtos;
+  let filteredProducts = products;
   if (query) {
     const searchTerm = query.toLowerCase();
-    filteredProdutos = produtos.filter(p =>
-      p.nome.toLowerCase().includes(searchTerm) ||
-      p.descricao?.toLowerCase().includes(searchTerm) ||
-      p.cor.toLowerCase().includes(searchTerm)
+    filteredProducts = products.filter(p =>
+      p.name.toLowerCase().includes(searchTerm) ||
+      p.description?.toLowerCase().includes(searchTerm) ||
+      p.color.toLowerCase().includes(searchTerm)
     );
   }
 
@@ -66,18 +64,18 @@ async function ProdutosPageContent({ searchParams }: PageProps) {
         <div>
           <h2 className="text-lg font-semibold text-foreground">{title}</h2>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {filteredProdutos.length} {filteredProdutos.length === 1 ? 'peça' : 'peças'}
+            {filteredProducts.length} {filteredProducts.length === 1 ? 'peça' : 'peças'}
           </p>
         </div>
       </div>
 
-      {filteredProdutos.length === 0 ? (
+      {filteredProducts.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-muted-foreground">Nenhuma peça encontrada</p>
         </div>
       ) : (
         <>
-          <ProdutosList produtos={filteredProdutos} />
+          <ProductsList products={filteredProducts} />
           <Pagination
             currentPage={pagination.page}
             totalPages={pagination.totalPages}
@@ -94,10 +92,10 @@ export default async function HomePage({ searchParams }: PageProps) {
 
   let categoryItems: { category: string; count: number }[] = [];
   try {
-    const categorias = await produtosService.getCategorias();
-    categoryItems = categorias.map(c => ({ category: c.category, count: c.products.length }));
+    const categories = await productsService.getCategories();
+    categoryItems = categories.map(c => ({ category: c.category, count: c.products.length }));
   } catch {
-    // falha silenciosa se endpoint de categorias indisponÃ­vel
+    // silent failure if categories endpoint is unavailable
   }
 
   return (
@@ -152,7 +150,7 @@ export default async function HomePage({ searchParams }: PageProps) {
                 </div>
               }
             >
-              <ProdutosPageContent searchParams={searchParams} />
+              <ProductsPageContent searchParams={searchParams} />
             </Suspense>
           </div>
         </div>

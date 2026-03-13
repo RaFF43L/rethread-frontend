@@ -1,23 +1,23 @@
 import { notFound } from 'next/navigation';
-import { produtosService } from '@/features/produtos/services/produtos.service';
-import { atualizarProduto } from '@/app/admin/actions';
-import { EditProdutoClient } from './client';
+import { productsService } from '@/features/products/services/products.service';
+import { updateProduct } from '@/app/admin/actions';
+import { EditProductClient } from './client';
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function EditProdutoPage({ params }: PageProps) {
+export default async function EditProductPage({ params }: PageProps) {
   const { id } = await params;
   const numericId = Number(id);
   if (isNaN(numericId)) notFound();
 
-  let produto;
+  let product;
   try {
-    produto = await produtosService.getProdutoByNumericId(numericId);
+    product = await productsService.getProductByNumericId(numericId);
   } catch {
     notFound();
   }
 
-  return <EditProdutoClient produto={produto} />;
+  return <EditProductClient product={product} />;
 }

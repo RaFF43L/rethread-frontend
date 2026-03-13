@@ -12,24 +12,17 @@ export function formatWhatsAppLink(phoneNumber: string, message: string): string
   return `https://wa.me/${phone}?text=${encodedMessage}`;
 }
 
-/**
- * Gera mensagem de texto para WhatsApp (SEM link de imagem)
- * Usado quando compartilhamos imagem como arquivo anexo
- */
-export function getWhatsAppMessageText(produto: { nome: string; preco: number; tamanho?: string }): string {
-  const linhas = [
+export function getWhatsAppMessageText(product: { name: string; price: number; size?: string }): string {
+  const lines = [
     `Ola! Tenho interesse neste produto:`,
     ``,
-    `*${produto.nome}*`,
-    `R$ ${produto.preco.toFixed(2).replace('.', ',')}`,
+    `*${product.name}*`,
+    `R$ ${product.price.toFixed(2).replace('.', ',')}`,
   ];
-  if (produto.tamanho) linhas.push(`Tamanho: ${produto.tamanho}`);
-  return linhas.join('\n');
+  if (product.size) lines.push(`Tamanho: ${product.size}`);
+  return lines.join('\n');
 }
 
-/**
- * Remove query parameters de URLs pré-assinadas do S3
- */
 function cleanUrlForWhatsApp(url: string): string {
   try {
     const urlObj = new URL(url);
@@ -39,15 +32,12 @@ function cleanUrlForWhatsApp(url: string): string {
   }
 }
 
-/**
- * DEPRECATED: Use getWhatsAppMessageText + Web Share API
- * Gera mensagem COM link de imagem (não funciona bem no WhatsApp)
- */
-export function getWhatsAppMessage(produto: { nome: string; preco: number; imagem?: string }): string {
-  const baseMessage = `Olá! Tenho interesse neste produto:\n\n📦 *${produto.nome}*\n💰 ${formatPrice(produto.preco)}`;
+/** @deprecated Use getWhatsAppMessageText + Web Share API */
+export function getWhatsAppMessage(product: { name: string; price: number; image?: string }): string {
+  const baseMessage = `Olá! Tenho interesse neste produto:\n\n📦 *${product.name}*\n💰 ${formatPrice(product.price)}`;
   
-  if (produto.imagem && produto.imagem.startsWith('http')) {
-    const cleanUrl = cleanUrlForWhatsApp(produto.imagem);
+  if (product.image && product.image.startsWith('http')) {
+    const cleanUrl = cleanUrlForWhatsApp(product.image);
     return `${baseMessage}\n\n🖼️ Imagem: ${cleanUrl}`;
   }
   

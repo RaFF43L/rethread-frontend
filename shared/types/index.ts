@@ -3,7 +3,7 @@ export interface ProductImage {
   urlS3: string;
 }
 
-export interface ProdutoBackend {
+export interface ProductBackend {
   id: number;
   codigoIdentificacao: string;
   cor: string;
@@ -24,20 +24,20 @@ export interface ProdutoBackend {
 
 export interface CategoryGroup {
   category: string;
-  products: ProdutoBackend[];
+  products: ProductBackend[];
 }
 
-export interface Produto {
+export interface Product {
   id: string;
   numericId: number;
-  nome: string;
-  descricao: string;
-  preco: number;
-  cor: string;
-  imagens: string[];
-  categoria?: string;
-  tamanho?: string;
-  disponivel: boolean;
+  name: string;
+  description: string;
+  price: number;
+  color: string;
+  images: string[];
+  category?: string;
+  size?: string;
+  available: boolean;
   createdAt: string;
   updatedAt: string;
 }

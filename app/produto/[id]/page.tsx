@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
-import { produtosService } from '@/features/produtos/services/produtos.service';
-import { ProdutoCard } from '@/features/produtos/components/ProdutoCard';
+import { productsService } from '@/features/products/services/products.service';
+import { ProductCard } from '@/features/products/components/ProductCard';
 import { env } from '@/shared/lib/env';
 import { formatWhatsAppLink, getWhatsAppMessageText } from '@/shared/utils/format';
 import { MessageCircle } from 'lucide-react';
@@ -14,25 +14,25 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const { id } = await params;
   
   try {
-    const produto = await produtosService.getProdutoById(id);
-    const primeiraImagem = produto.imagens[0] || '/placeholder-product.svg';
+    const product = await productsService.getProductById(id);
+    const firstImage = product.images[0] || '/placeholder-product.svg';
 
     return {
-      title: `${produto.nome} - Segunda Aura Brechó`,
-      description: produto.descricao || `${produto.nome} - R$ ${produto.preco.toFixed(2).replace('.', ',')}`,
+      title: `${product.name} - Segunda Aura Brechó`,
+      description: product.description || `${product.name} - R$ ${product.price.toFixed(2).replace('.', ',')}`,
       openGraph: {
-        title: `${produto.nome} - Segunda Aura Brechó`,
+        title: `${product.name} - Segunda Aura Brechó`,
         description: [
-          `R$ ${produto.preco.toFixed(2).replace('.', ',')}`,
-          produto.tamanho ? `Tamanho ${produto.tamanho}` : null,
-          produto.disponivel ? 'Disponivel' : 'Indisponivel',
+          `R$ ${product.price.toFixed(2).replace('.', ',')}`,
+          product.size ? `Tamanho ${product.size}` : null,
+          product.available ? 'Disponivel' : 'Indisponivel',
         ].filter(Boolean).join(' · '),
         images: [
           {
-            url: primeiraImagem,
+            url: firstImage,
             width: 1200,
             height: 630,
-            alt: produto.nome,
+            alt: product.name,
           },
         ],
         type: 'website',
@@ -40,9 +40,9 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${produto.nome} - Segunda Aura Brecho`,
-        description: `R$ ${produto.preco.toFixed(2).replace('.', ',')}${produto.tamanho ? ` · Tamanho ${produto.tamanho}` : ''}`,
-        images: [primeiraImagem],
+        title: `${product.name} - Segunda Aura Brecho`,
+        description: `R$ ${product.price.toFixed(2).replace('.', ',')}${product.size ? ` · Tamanho ${product.size}` : ''}`,
+        images: [firstImage],
       },
     };
   } catch {
@@ -55,16 +55,15 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params;
   
-  let produto;
+  let product;
   try {
-    produto = await produtosService.getProdutoById(id);
+    product = await productsService.getProductById(id);
   } catch {
     notFound();
   }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-50 shadow-md backdrop-blur-sm bg-card/98">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
@@ -83,22 +82,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
       </header>
 
-      {/* Produto */}
       <main className="container mx-auto px-4 py-8 max-w-2xl">
         <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6 text-center">
           Detalhes do Produto
         </h2>
         
-        <ProdutoCard 
-          produto={produto} 
+        <ProductCard 
+          product={product} 
           whatsappNumber={env.whatsappNumber}
         />
 
-        {produto.disponivel && (
+        {product.available && (
           <a
             href={formatWhatsAppLink(
               env.whatsappNumber,
-              `${getWhatsAppMessageText({ nome: produto.nome, preco: produto.preco, tamanho: produto.tamanho })}\n\n${env.appUrl}/produto/${produto.id}`
+              `${getWhatsAppMessageText({ name: product.name, price: product.price, size: product.size })}\n\n${env.appUrl}/produto/${product.id}`
             )}
             target="_blank"
             rel="noopener noreferrer"

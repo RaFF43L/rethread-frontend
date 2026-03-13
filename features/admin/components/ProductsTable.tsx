@@ -1,14 +1,14 @@
 import Image from 'next/image';
 import { formatPrice } from '@/shared/utils/format';
 import { Badge } from '@/shared/components/ui/badge';
-import { ProdutoActions } from './ProdutoActions';
-import type { Produto } from '@/shared/types';
+import { ProductActions } from './ProductActions';
+import type { Product } from '@/shared/types';
 
-interface ProdutosTableProps {
-  produtos: Produto[];
+interface ProductsTableProps {
+  products: Product[];
 }
 
-export function ProdutosTable({ produtos }: ProdutosTableProps) {
+export function ProductsTable({ products }: ProductsTableProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <table className="min-w-full divide-y divide-gray-100">
@@ -35,47 +35,47 @@ export function ProdutosTable({ produtos }: ProdutosTableProps) {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">
-          {produtos.map((produto) => (
-            <tr key={produto.id} className="hover:bg-gray-50 transition-colors">
+          {products.map((product) => (
+            <tr key={product.id} className="hover:bg-gray-50 transition-colors">
               <td className="px-5 py-4 whitespace-nowrap">
                 <div className="flex items-center gap-3">
                   <div className="relative h-11 w-11 flex-shrink-0">
                     <Image
-                      src={produto.imagens[0] || '/placeholder-product.svg'}
-                      alt={produto.nome}
+                      src={product.images[0] || '/placeholder-product.svg'}
+                      alt={product.name}
                       fill
                       className="rounded-lg object-cover"
                     />
                   </div>
                   <div>
                     <div className="text-sm font-medium text-gray-900 truncate max-w-[140px]">
-                      {produto.nome}
+                      {product.name}
                     </div>
-                    <div className="text-xs text-gray-400">{produto.cor}</div>
+                    <div className="text-xs text-gray-400">{product.color}</div>
                   </div>
                 </div>
               </td>
               <td className="px-5 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-600 capitalize">{produto.categoria || '—'}</span>
+                <span className="text-sm text-gray-600 capitalize">{product.category || '—'}</span>
               </td>
               <td className="px-5 py-4 whitespace-nowrap">
-                <span className="text-sm text-gray-600">{produto.tamanho || '—'}</span>
+                <span className="text-sm text-gray-600">{product.size || '—'}</span>
               </td>
               <td className="px-5 py-4 whitespace-nowrap">
-                <span className="text-sm font-semibold text-[#A0522D]">{formatPrice(produto.preco)}</span>
+                <span className="text-sm font-semibold text-[#A0522D]">{formatPrice(product.price)}</span>
               </td>
               <td className="px-5 py-4 whitespace-nowrap">
-                {produto.disponivel ? (
+                {product.available ? (
                   <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-transparent">Disponível</Badge>
                 ) : (
                   <Badge variant="secondary">Vendido</Badge>
                 )}
               </td>
               <td className="px-5 py-4 whitespace-nowrap">
-                <ProdutoActions
-                  numericId={produto.numericId}
-                  nome={produto.nome}
-                  disponivel={produto.disponivel}
+                <ProductActions
+                  numericId={product.numericId}
+                  name={product.name}
+                  available={product.available}
                 />
               </td>
             </tr>

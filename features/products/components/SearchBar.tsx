@@ -1,7 +1,5 @@
 'use client';
 
-// Barra de pesquisa e filtros para produtos
-
 import { Input } from '@/shared/components/ui/input';
 import { Button } from '@/shared/components/ui/button';
 import { Search, X } from 'lucide-react';

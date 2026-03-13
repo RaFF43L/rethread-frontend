@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { produtosService } from '@/features/produtos/services/produtos.service';
+import { productsService } from '@/features/products/services/products.service';
 import { Pagination } from '@/shared/components/Pagination';
-import { ProdutoCard } from '@/features/admin/components/ProdutoCard';
-import { ProdutosTable } from '@/features/admin/components/ProdutosTable';
+import { ProductCard } from '@/features/admin/components/ProductCard';
+import { ProductsTable } from '@/features/admin/components/ProductsTable';
 import { Button } from '@/shared/components/ui/button';
 import { Plus } from 'lucide-react';
 
@@ -10,12 +10,12 @@ interface PageProps {
   searchParams: Promise<{ page?: string }>;
 }
 
-export default async function AdminProdutosPage({ searchParams }: PageProps) {
+export default async function AdminProductsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const limit = 15;
 
-  const { data: produtos, pagination } = await produtosService.getProdutos({ page, limit });
+  const { data: products, pagination } = await productsService.getProducts({ page, limit });
 
   return (
     <div>
@@ -35,7 +35,7 @@ export default async function AdminProdutosPage({ searchParams }: PageProps) {
         </Button>
       </div>
 
-      {produtos.length === 0 ? (
+      {products.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <p className="text-gray-500 mb-4">Nenhum produto cadastrado</p>
           <Button asChild className="bg-[#A0522D] hover:bg-[#8B4513]">
@@ -49,14 +49,14 @@ export default async function AdminProdutosPage({ searchParams }: PageProps) {
         <>
           {/* Mobile: Cards */}
           <div className="flex flex-col gap-3 md:hidden">
-            {produtos.map((produto) => (
-              <ProdutoCard key={produto.id} produto={produto} />
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
 
           {/* Desktop: Tabela */}
           <div className="hidden md:block">
-            <ProdutosTable produtos={produtos} />
+            <ProductsTable products={products} />
           </div>
 
           <div className="mt-6">

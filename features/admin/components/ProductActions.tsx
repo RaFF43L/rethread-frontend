@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { marcarComoVendido, reverterVenda, deletarProduto } from '@/app/admin/actions';
+import { markAsSold, revertSale, deleteProduct } from '@/app/admin/actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,10 +16,10 @@ import {
 import { Loader2, Trash2, ShoppingBag, RotateCcw, Pencil } from 'lucide-react';
 import Link from 'next/link';
 
-interface ProdutoActionsProps {
+interface ProductActionsProps {
   numericId: number;
-  nome: string;
-  disponivel: boolean;
+  name: string;
+  available: boolean;
 }
 
 type ActionType = 'vender' | 'reverter' | 'deletar' | null;
@@ -45,7 +45,7 @@ const DIALOG_CONFIG: Record<NonNullable<ActionType>, { title: string; descriptio
   },
 };
 
-export function ProdutoActions({ numericId, nome, disponivel }: ProdutoActionsProps) {
+export function ProductActions({ numericId, name, available }: ProductActionsProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<ActionType>(null);
@@ -55,9 +55,9 @@ export function ProdutoActions({ numericId, nome, disponivel }: ProdutoActionsPr
     setError(null);
 
     const actionMap = {
-      vender: () => marcarComoVendido(numericId),
-      reverter: () => reverterVenda(numericId),
-      deletar: () => deletarProduto(numericId),
+      vender: () => markAsSold(numericId),
+      reverter: () => revertSale(numericId),
+      deletar: () => deleteProduct(numericId),
     };
 
     startTransition(async () => {
@@ -90,7 +90,7 @@ export function ProdutoActions({ numericId, nome, disponivel }: ProdutoActionsPr
               Editar
             </Link>
 
-            {disponivel ? (
+            {available ? (
               <AlertDialogTrigger asChild>
                 <button
                   onClick={() => setPendingAction('vender')}
@@ -127,7 +127,7 @@ export function ProdutoActions({ numericId, nome, disponivel }: ProdutoActionsPr
             <AlertDialogHeader>
               <AlertDialogTitle>{config?.title}</AlertDialogTitle>
               <AlertDialogDescription>
-                <span className="font-medium text-gray-700">&ldquo;{nome}&rdquo;</span>
+                <span className="font-medium text-gray-700">&ldquo;{name}&rdquo;</span>
                 {' — '}
                 {config?.description}
               </AlertDialogDescription>
