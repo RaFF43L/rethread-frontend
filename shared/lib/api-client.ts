@@ -3,12 +3,21 @@
 import { ApiError } from '@/shared/types';
 import { env } from './env';
 
-class ApiClient {
-  private baseUrl: string;
-
-  constructor() {
-    this.baseUrl = env.apiUrl;
+function getBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    // No browser: usa o proxy do Next.js para evitar CORS
+    return '/api/backend';
   }
+  // No servidor: chama a API diretamente
+  return env.apiUrl;
+}
+
+class ApiClient {
+  private get baseUrl(): string {
+    return getBaseUrl();
+  }
+
+  constructor() {}
 
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {

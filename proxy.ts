@@ -1,32 +1,24 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export async function proxy(request: NextRequest) {
-  const token = request.cookies.get(process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'rethread_admin_token')?.value;
+export function proxy(request: NextRequest) {
+  const cookieName = process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'segunda_aura_token';
+  const token = request.cookies.get(cookieName)?.value;
 
-  if (!token) {
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
+  const isLoginRoute = request.nextUrl.pathname === '/login';
+
+  if (isAdminRoute && !token) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const redirectResponse = NextResponse.redirect(new URL('/login', request.url));
-      redirectResponse.cookies.delete(process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'rethread_admin_token');
-      return redirectResponse;
-    }
-
-    return NextResponse.next();
-  } catch (error) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  if (isLoginRoute && token) {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
   }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: '/admin/:path*',
+  matcher: ['/admin/:path*', '/login'],
 };

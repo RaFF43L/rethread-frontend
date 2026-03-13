@@ -15,9 +15,11 @@ export function useAuth() {
 
     try {
       const response = await authService.login(credentials);
-      
-      document.cookie = `${process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'rethread_admin_token'}=${response.token}; path=/; max-age=86400`;
-      
+      const token = response.accessToken || response.token;
+      if (!token) throw new Error('Token não recebido do servidor');
+
+      document.cookie = `${process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'segunda_aura_token'}=${token}; path=/; max-age=86400`;
+
       router.push('/admin/dashboard');
       router.refresh();
     } catch (err: any) {
@@ -28,7 +30,7 @@ export function useAuth() {
   };
 
   const logout = () => {
-    document.cookie = `${process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'rethread_admin_token'}=; path=/; max-age=0`;
+    document.cookie = `${process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'segunda_aura_token'}=; path=/; max-age=0`;
     router.push('/');
     router.refresh();
   };

@@ -29,6 +29,7 @@ export interface CategoryGroup {
 
 export interface Produto {
   id: string;
+  numericId: number;
   nome: string;
   descricao: string;
   preco: number;
@@ -72,6 +73,9 @@ export interface User {
 }
 
 export interface AuthResponse {
-  user: User;
-  token: string;
+  user?: User;
+  token?: string;
+  accessToken?: string;
+  idToken?: string;
+  refreshToken?: string;
 }

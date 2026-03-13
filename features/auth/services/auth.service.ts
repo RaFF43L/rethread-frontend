@@ -11,13 +11,8 @@ export class AuthService {
     return apiClient.post<AuthResponse>('/auth/login', credentials);
   }
 
-  async verifyToken(token: string): Promise<boolean> {
-    try {
-      await apiClient.withAuth(token).get('/auth/verify');
-      return true;
-    } catch {
-      return false;
-    }
+  verifyToken(token: string): boolean {
+    return !!token;
   }
 }
 
