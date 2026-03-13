@@ -1,10 +1,12 @@
-// Página de listagem de produtos para administradores
-
 import Link from 'next/link';
 import { produtosService } from '@/features/produtos/services/produtos.service';
 import { formatPrice } from '@/shared/utils/format';
 import { Pagination } from '@/shared/components/Pagination';
+import { ProdutoActions } from '@/features/admin/components/ProdutoActions';
+import { Button } from '@/shared/components/ui/button';
+import { Badge } from '@/shared/components/ui/badge';
 import Image from 'next/image';
+import { Plus } from 'lucide-react';
 
 interface PageProps {
   searchParams: Promise<{ page?: string }>;
@@ -13,117 +15,107 @@ interface PageProps {
 export default async function AdminProdutosPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
-  const limit = 10;
+  const limit = 15;
 
-  const { data: produtos, pagination } = await produtosService.getProdutos({
-    page,
-    limit,
-  });
+  const { data: produtos, pagination } = await produtosService.getProdutos({ page, limit });
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Produtos</h1>
-          <p className="text-gray-600 mt-2">Gerencie todos os produtos da loja</p>
+          <h1 className="text-2xl font-bold text-gray-900">Produtos</h1>
+          <p className="text-gray-500 mt-1 text-sm">
+            {pagination.total} produto{pagination.total !== 1 ? 's' : ''} no total
+          </p>
         </div>
-        
-        <Link
-          href="/admin/produtos/new"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Novo Produto
-        </Link>
+
+        <Button asChild className="bg-[#A0522D] hover:bg-[#8B4513]">
+          <Link href="/admin/produtos/new">
+            <Plus className="w-4 h-4" />
+            Novo Produto
+          </Link>
+        </Button>
       </div>
 
       {produtos.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <p className="text-gray-500 text-lg mb-4">Nenhum produto cadastrado</p>
-          <Link
-            href="/admin/produtos/new"
-            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-          >
-            Cadastrar Primeiro Produto
-          </Link>
+        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <p className="text-gray-500 mb-4">Nenhum produto cadastrado</p>
+          <Button asChild className="bg-[#A0522D] hover:bg-[#8B4513]">
+            <Link href="/admin/produtos/new">
+              <Plus className="w-4 h-4" />
+              Cadastrar primeiro produto
+            </Link>
+          </Button>
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-100">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Produto
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cor
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                    Categoria
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                    Tamanho
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Preço
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-100">
                 {produtos.map((produto) => (
-                  <tr key={produto.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="relative h-10 w-10 flex-shrink-0">
+                  <tr key={produto.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-11 w-11 flex-shrink-0">
                           <Image
                             src={produto.imagens[0] || '/placeholder-product.svg'}
                             alt={produto.nome}
                             fill
-                            className="rounded object-cover"
+                            className="rounded-lg object-cover"
                           />
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{produto.nome}</div>
-                          <div className="text-sm text-gray-500">{produto.categoria}</div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 truncate max-w-[140px]">
+                            {produto.nome}
+                          </div>
+                          <div className="text-xs text-gray-400">{produto.cor}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded-full border-2 border-gray-300"
-                          style={{ backgroundColor: produto.cor.toLowerCase() }}
-                        />
-                        <span className="text-sm text-gray-900">{produto.cor}</span>
-                      </div>
+                    <td className="px-5 py-4 whitespace-nowrap hidden md:table-cell">
+                      <span className="text-sm text-gray-600 capitalize">{produto.categoria || '—'}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{formatPrice(produto.preco)}</div>
+                    <td className="px-5 py-4 whitespace-nowrap hidden sm:table-cell">
+                      <span className="text-sm text-gray-600">{produto.tamanho || '—'}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <span className="text-sm font-semibold text-[#A0522D]">{formatPrice(produto.preco)}</span>
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap">
                       {produto.disponivel ? (
-                        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          Disponível
-                        </span>
+                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-transparent">Disponível</Badge>
                       ) : (
-                        <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                          Indisponível
-                        </span>
+                        <Badge variant="secondary">Vendido</Badge>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link
-                        href={`/admin/produtos/${produto.id}/edit`}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                      >
-                        Editar
-                      </Link>
-                      <button className="text-red-600 hover:text-red-900">
-                        Excluir
-                      </button>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <ProdutoActions
+                        numericId={produto.numericId}
+                        nome={produto.nome}
+                        disponivel={produto.disponivel}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -131,11 +123,13 @@ export default async function AdminProdutosPage({ searchParams }: PageProps) {
             </table>
           </div>
 
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            basePath="/admin/produtos"
-          />
+          <div className="mt-6">
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              basePath="/admin/produtos"
+            />
+          </div>
         </>
       )}
     </div>
@@ -143,3 +137,4 @@ export default async function AdminProdutosPage({ searchParams }: PageProps) {
 }
 
 export const revalidate = 0;
+
