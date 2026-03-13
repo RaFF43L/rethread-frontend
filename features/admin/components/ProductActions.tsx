@@ -83,7 +83,7 @@ export function ProductActions({ numericId, name, available }: ProductActionsPro
         <AlertDialog>
           <div className="flex items-center gap-1">
             <Link
-              href={`/admin/produtos/${numericId}/edit`}
+              href={`/admin/products/${numericId}/edit`}
               className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-50 px-2 py-1 rounded transition-colors"
             >
               <Pencil className="w-3.5 h-3.5" />

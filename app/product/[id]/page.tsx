@@ -96,7 +96,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <a
             href={formatWhatsAppLink(
               env.whatsappNumber,
-              `${getWhatsAppMessageText({ name: product.name, price: product.price, size: product.size })}\n\n${env.appUrl}/produto/${product.id}`
+              `${getWhatsAppMessageText({ name: product.name, price: product.price, size: product.size })}\n\n${env.appUrl}/product/${product.id}`
             )}
             target="_blank"
             rel="noopener noreferrer"

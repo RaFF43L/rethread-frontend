@@ -259,7 +259,7 @@ export function ProductForm({
 
       <div className="flex gap-3 pb-8">
         <Button type="button" variant="outline" className="flex-1" asChild>
-          <Link href="/admin/produtos">Cancelar</Link>
+          <Link href="/admin/products">Cancelar</Link>
         </Button>
         <Button type="submit" disabled={isPending} className="flex-1 bg-[#A0522D] hover:bg-[#8B4513]">
           {isPending ? (

@@ -18,7 +18,7 @@ export function ProductCard({ product }: ProductCardProps) {
       className="bg-white rounded-2xl overflow-hidden border-2 border-transparent hover:border-[#A0522D] transition-all duration-300 hover:shadow-xl hover:scale-[1.03] flex flex-col h-full cursor-pointer"
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('button')) return;
-        router.push(`/produto/${product.id}`);
+        router.push(`/product/${product.id}`);
       }}
     >
       <div className="relative overflow-hidden aspect-[3/4] bg-stone-50">

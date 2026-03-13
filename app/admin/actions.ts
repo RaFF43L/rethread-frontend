@@ -29,7 +29,7 @@ export async function markAsSold(id: number) {
     throw new Error(err.message || 'Erro ao marcar produto como vendido');
   }
 
-  revalidatePath('/admin/produtos');
+  revalidatePath('/admin/products');
 }
 
 export async function revertSale(id: number) {
@@ -47,7 +47,7 @@ export async function revertSale(id: number) {
     throw new Error(err.message || 'Erro ao reverter venda');
   }
 
-  revalidatePath('/admin/produtos');
+  revalidatePath('/admin/products');
 }
 
 export async function deleteProduct(id: number) {
@@ -64,7 +64,7 @@ export async function deleteProduct(id: number) {
     throw new Error(err.message || 'Erro ao deletar produto');
   }
 
-  revalidatePath('/admin/produtos');
+  revalidatePath('/admin/products');
 }
 
 export async function createProduct(formData: FormData) {
@@ -84,8 +84,8 @@ export async function createProduct(formData: FormData) {
     throw new Error(msg);
   }
 
-  revalidatePath('/admin/produtos');
-  redirect('/admin/produtos');
+  revalidatePath('/admin/products');
+  redirect('/admin/products');
 }
 
 export async function updateProduct(id: number, formData: FormData) {
@@ -105,6 +105,6 @@ export async function updateProduct(id: number, formData: FormData) {
     throw new Error(msg);
   }
 
-  revalidatePath('/admin/produtos');
-  redirect('/admin/produtos');
+  revalidatePath('/admin/products');
+  redirect('/admin/products');
 }

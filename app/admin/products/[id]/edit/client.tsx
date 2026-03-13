@@ -20,7 +20,7 @@ export function EditProductClient({ product }: EditProductClientProps) {
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-3 mb-8">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/produtos">
+          <Link href="/admin/products">
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </Button>

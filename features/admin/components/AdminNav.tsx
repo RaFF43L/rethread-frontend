@@ -21,7 +21,7 @@ export function AdminNav() {
       icon: LayoutDashboard,
     },
     {
-      href: '/admin/produtos',
+      href: '/admin/products',
       label: 'Produtos',
       icon: Package,
     },

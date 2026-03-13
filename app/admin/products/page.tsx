@@ -28,7 +28,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
         </div>
 
         <Button asChild className="bg-[#A0522D] hover:bg-[#8B4513]">
-          <Link href="/admin/produtos/new">
+          <Link href="/admin/products/new">
             <Plus className="w-4 h-4" />
             Novo Produto
           </Link>
@@ -39,7 +39,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <p className="text-gray-500 mb-4">Nenhum produto cadastrado</p>
           <Button asChild className="bg-[#A0522D] hover:bg-[#8B4513]">
-            <Link href="/admin/produtos/new">
+            <Link href="/admin/products/new">
               <Plus className="w-4 h-4" />
               Cadastrar primeiro produto
             </Link>
@@ -63,7 +63,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
             <Pagination
               currentPage={pagination.page}
               totalPages={pagination.totalPages}
-              basePath="/admin/produtos"
+              basePath="/admin/products"
             />
           </div>
         </>

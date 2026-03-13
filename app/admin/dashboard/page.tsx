@@ -80,13 +80,13 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
 
   const quickActions = [
     {
-      href: '/admin/produtos/new',
+      href: '/admin/products/new',
       label: 'Adicionar Produto',
       icon: Plus,
       variant: 'default' as const,
     },
     {
-      href: '/admin/produtos',
+      href: '/admin/products',
       label: 'Ver Todos os Produtos',
       icon: List,
       variant: 'secondary' as const,
