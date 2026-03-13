@@ -59,6 +59,25 @@ export interface PaginatedResponse<T> {
   };
 }
 
+export interface DashboardStats {
+  total: number;
+  available: number;
+  sold: number;
+  totalValue: number;
+  availableValue: number;
+  soldValue: number;
+}
+
+export interface DashboardFilterParams {
+  startDate?: string;
+  endDate?: string;
+  category?: string;
+  size?: string;
+  marca?: string;
+  cor?: string;
+  status?: 'available' | 'sold';
+}
+
 export interface ApiError {
   message: string;
   statusCode: number;
