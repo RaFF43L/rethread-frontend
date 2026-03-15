@@ -2,6 +2,11 @@ const MAX_WIDTH = 1920;
 const MAX_HEIGHT = 1920;
 const QUALITY = 0.8;
 
+function replaceExtension(name: string, ext: string): string {
+  const dot = name.lastIndexOf('.');
+  return (dot === -1 ? name : name.slice(0, dot)) + ext;
+}
+
 export function compressImage(file: File): Promise<File> {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith('image/')) {
@@ -44,13 +49,14 @@ export function compressImage(file: File): Promise<File> {
             resolve(file);
             return;
           }
-          const compressed = new File([blob], file.name, {
-            type: 'image/webp',
-            lastModified: file.lastModified,
-          });
+          const compressed = new File(
+            [blob],
+            replaceExtension(file.name, '.jpg'),
+            { type: 'image/jpeg', lastModified: file.lastModified },
+          );
           resolve(compressed);
         },
-        'image/webp',
+        'image/jpeg',
         QUALITY,
       );
     };

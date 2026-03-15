@@ -70,13 +70,18 @@ export async function deleteProduct(id: number) {
 export async function createProduct(formData: FormData) {
   const token = await getToken();
 
-  const res = await fetch(`${env.apiUrl}/products`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${env.apiUrl}/products`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+  } catch {
+    throw new Error('Erro de conexão com o servidor. Tente novamente.');
+  }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -91,13 +96,18 @@ export async function createProduct(formData: FormData) {
 export async function updateProduct(id: number, formData: FormData) {
   const token = await getToken();
 
-  const res = await fetch(`${env.apiUrl}/products/${id}`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${env.apiUrl}/products/${id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+  } catch {
+    throw new Error('Erro de conexão com o servidor. Tente novamente.');
+  }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));

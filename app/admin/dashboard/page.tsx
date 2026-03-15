@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { cookies } from 'next/headers';
 import { productsService } from '@/features/products/services/products.service';
 import { formatPrice } from '@/shared/utils/format';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -21,7 +22,12 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
   if (params.startDate) filters.startDate = params.startDate;
   if (params.endDate) filters.endDate = params.endDate;
 
-  const dashboard = await productsService.getDashboard(filters);
+  const cookieStore = await cookies();
+  const token = cookieStore.get(
+    process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'segunda_aura_token'
+  )?.value;
+
+  const dashboard = await productsService.getDashboard(filters, token || undefined);
 
   const stats = [
     {
