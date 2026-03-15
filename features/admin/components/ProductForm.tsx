@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/shared/components/ui/button';
@@ -38,9 +39,10 @@ type FormValues = z.infer<typeof schema>;
 export interface ProductFormProps {
   defaultValues?: Partial<FormValues>;
   existingImages?: string[];
-  onSubmitAction: (formData: FormData) => Promise<void>;
+  onSubmitAction: (formData: FormData) => Promise<{ success: true }>;
   submitLabel: string;
   submittingLabel: string;
+  redirectTo?: string;
 }
 
 export function ProductForm({
@@ -49,8 +51,10 @@ export function ProductForm({
   onSubmitAction,
   submitLabel,
   submittingLabel,
+  redirectTo = '/admin/products',
 }: ProductFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
   const [previews, setPreviews] = useState<string[]>(existingImages);
   const [files, setFiles] = useState<File[]>([]);
   const [removedExisting, setRemovedExisting] = useState<string[]>([]);
@@ -127,11 +131,10 @@ export function ProductForm({
     startTransition(async () => {
       try {
         await onSubmitAction(data);
+        router.push(redirectTo);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Erro inesperado';
-        if (!message.includes('NEXT_REDIRECT')) {
-          setServerError(message);
-        }
+        setServerError(message);
       }
     });
   };

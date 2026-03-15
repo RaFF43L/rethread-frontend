@@ -67,7 +67,7 @@ export async function deleteProduct(id: number) {
   revalidatePath('/admin/products');
 }
 
-export async function createProduct(formData: FormData) {
+export async function createProduct(formData: FormData): Promise<{ success: true }> {
   const token = await getToken();
 
   let res: Response;
@@ -90,10 +90,10 @@ export async function createProduct(formData: FormData) {
   }
 
   revalidatePath('/admin/products');
-  redirect('/admin/products');
+  return { success: true };
 }
 
-export async function updateProduct(id: number, formData: FormData) {
+export async function updateProduct(id: number, formData: FormData): Promise<{ success: true }> {
   const token = await getToken();
 
   let res: Response;
@@ -116,5 +116,5 @@ export async function updateProduct(id: number, formData: FormData) {
   }
 
   revalidatePath('/admin/products');
-  redirect('/admin/products');
+  return { success: true };
 }

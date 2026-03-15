@@ -13,7 +13,7 @@ interface EditProductClientProps {
 
 export function EditProductClient({ product }: EditProductClientProps) {
   const handleSubmit = async (formData: FormData) => {
-    await updateProduct(product.numericId, formData);
+    return updateProduct(product.numericId, formData);
   };
 
   return (
