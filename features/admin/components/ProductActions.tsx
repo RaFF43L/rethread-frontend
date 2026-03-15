@@ -61,13 +61,11 @@ export function ProductActions({ numericId, name, available }: ProductActionsPro
     };
 
     startTransition(async () => {
-      try {
-        await actionMap[pendingAction]();
-      } catch (e: any) {
-        setError(e.message);
-      } finally {
-        setPendingAction(null);
+      const result = await actionMap[pendingAction]();
+      if (!result.success) {
+        setError(result.error);
       }
+      setPendingAction(null);
     });
   };
 

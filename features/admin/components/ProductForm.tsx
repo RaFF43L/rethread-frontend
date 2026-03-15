@@ -21,6 +21,7 @@ import { Upload, X, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { compressImage } from '@/shared/utils/compress-image';
+import type { ActionResult } from '@/app/admin/actions';
 
 const CATEGORIES = ['calca', 'blusa', 'camiseta', 'short', 'vestido'] as const;
 const SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'Único'] as const;
@@ -39,7 +40,7 @@ type FormValues = z.infer<typeof schema>;
 export interface ProductFormProps {
   defaultValues?: Partial<FormValues>;
   existingImages?: string[];
-  onSubmitAction: (formData: FormData) => Promise<{ success: true }>;
+  onSubmitAction: (formData: FormData) => Promise<ActionResult>;
   submitLabel: string;
   submittingLabel: string;
   redirectTo?: string;
@@ -129,12 +130,11 @@ export function ProductForm({
     }
 
     startTransition(async () => {
-      try {
-        await onSubmitAction(data);
+      const result = await onSubmitAction(data);
+      if (result.success) {
         router.push(redirectTo);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Erro inesperado';
-        setServerError(message);
+      } else {
+        setServerError(result.error);
       }
     });
   };

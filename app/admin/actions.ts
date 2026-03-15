@@ -5,17 +5,21 @@ import { revalidatePath } from 'next/cache';
 import { env } from '@/shared/lib/env';
 import { redirect } from 'next/navigation';
 
-async function getToken(): Promise<string> {
+export type ActionResult =
+  | { success: true }
+  | { success: false; error: string };
+
+async function getToken(): Promise<string | null> {
   const cookieStore = await cookies();
-  const token = cookieStore.get(
+  return cookieStore.get(
     process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'segunda_aura_token'
-  )?.value;
-  if (!token) redirect('/login');
-  return token;
+  )?.value ?? null;
 }
 
-export async function markAsSold(id: number) {
+export async function markAsSold(id: number): Promise<ActionResult> {
   const token = await getToken();
+  if (!token) redirect('/login');
+
   const res = await fetch(`${env.apiUrl}/products/${id}/sell`, {
     method: 'PATCH',
     headers: {
@@ -26,14 +30,17 @@ export async function markAsSold(id: number) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || 'Erro ao marcar produto como vendido');
+    return { success: false, error: err.message || 'Erro ao marcar produto como vendido' };
   }
 
   revalidatePath('/admin/products');
+  return { success: true };
 }
 
-export async function revertSale(id: number) {
+export async function revertSale(id: number): Promise<ActionResult> {
   const token = await getToken();
+  if (!token) redirect('/login');
+
   const res = await fetch(`${env.apiUrl}/products/${id}/revert-sale`, {
     method: 'PATCH',
     headers: {
@@ -44,14 +51,17 @@ export async function revertSale(id: number) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || 'Erro ao reverter venda');
+    return { success: false, error: err.message || 'Erro ao reverter venda' };
   }
 
   revalidatePath('/admin/products');
+  return { success: true };
 }
 
-export async function deleteProduct(id: number) {
+export async function deleteProduct(id: number): Promise<ActionResult> {
   const token = await getToken();
+  if (!token) redirect('/login');
+
   const res = await fetch(`${env.apiUrl}/products/${id}`, {
     method: 'DELETE',
     headers: {
@@ -61,14 +71,16 @@ export async function deleteProduct(id: number) {
 
   if (!res.ok && res.status !== 204) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || 'Erro ao deletar produto');
+    return { success: false, error: err.message || 'Erro ao deletar produto' };
   }
 
   revalidatePath('/admin/products');
+  return { success: true };
 }
 
-export async function createProduct(formData: FormData): Promise<{ success: true }> {
+export async function createProduct(formData: FormData): Promise<ActionResult> {
   const token = await getToken();
+  if (!token) redirect('/login');
 
   let res: Response;
   try {
@@ -79,22 +91,24 @@ export async function createProduct(formData: FormData): Promise<{ success: true
       },
       body: formData,
     });
-  } catch {
-    throw new Error('Erro de conexão com o servidor. Tente novamente.');
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : 'desconhecido';
+    return { success: false, error: `Erro de conexão com o servidor (${detail}). Tente novamente.` };
   }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    const msg = Array.isArray(err.message) ? err.message.join(', ') : (err.message || 'Erro ao criar produto');
-    throw new Error(msg);
+    const msg = Array.isArray(err.message) ? err.message.join(', ') : (err.message || `Erro ao criar produto (status ${res.status})`);
+    return { success: false, error: msg };
   }
 
   revalidatePath('/admin/products');
   return { success: true };
 }
 
-export async function updateProduct(id: number, formData: FormData): Promise<{ success: true }> {
+export async function updateProduct(id: number, formData: FormData): Promise<ActionResult> {
   const token = await getToken();
+  if (!token) redirect('/login');
 
   let res: Response;
   try {
@@ -105,14 +119,15 @@ export async function updateProduct(id: number, formData: FormData): Promise<{ s
       },
       body: formData,
     });
-  } catch {
-    throw new Error('Erro de conexão com o servidor. Tente novamente.');
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : 'desconhecido';
+    return { success: false, error: `Erro de conexão com o servidor (${detail}). Tente novamente.` };
   }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    const msg = Array.isArray(err.message) ? err.message.join(', ') : (err.message || 'Erro ao atualizar produto');
-    throw new Error(msg);
+    const msg = Array.isArray(err.message) ? err.message.join(', ') : (err.message || `Erro ao atualizar produto (status ${res.status})`);
+    return { success: false, error: msg };
   }
 
   revalidatePath('/admin/products');

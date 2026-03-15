@@ -12,9 +12,8 @@ interface EditProductClientProps {
 }
 
 export function EditProductClient({ product }: EditProductClientProps) {
-  const handleSubmit = async (formData: FormData) => {
-    return updateProduct(product.numericId, formData);
-  };
+  const handleSubmit = async (formData: FormData) =>
+    updateProduct(product.numericId, formData);
 
   return (
     <div className="max-w-2xl mx-auto">
