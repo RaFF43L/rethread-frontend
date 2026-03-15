@@ -3,11 +3,12 @@ import { productsService } from '@/features/products/services/products.service';
 import { ProductsList } from '@/features/products/components/ProductsList';
 import { Pagination } from '@/shared/components/Pagination';
 import { CategoryCarousel } from '@/features/products/components/CategoryCarousel';
-import { FilterSidebar } from '@/features/products/components/FilterSidebar';
-import { MobileBottomNav } from '@/features/products/components/MobileBottomNav';
+import { SiteHeader } from '@/features/products/components/SiteHeader';
+import { WhatsAppFloat } from '@/features/products/components/WhatsAppFloat';
 import Link from 'next/link';
-import { Shield } from 'lucide-react';
 import { env } from '@/shared/lib/env';
+import { getImageUrl } from '@/shared/lib/env';
+import { ProductBackend } from '@/shared/types';
 
 interface PageProps {
   searchParams: Promise<{ page?: string; limit?: string; q?: string; categoria?: string; tamanho?: string }>;
@@ -21,7 +22,15 @@ const CATEGORY_LABELS: Record<string, string> = {
   vestido: 'Vestidos',
 };
 
-async function ProductsPageContent({ searchParams }: PageProps) {
+function extractImage(product: ProductBackend): string {
+  if (product.imageUrls && product.imageUrls.length > 0) return product.imageUrls[0];
+  if (product.images && product.images.length > 0) return getImageUrl(product.images[0].urlS3);
+  if (product.imageUrl) return product.imageUrl;
+  if (product.urlS3) return getImageUrl(product.urlS3);
+  return '/placeholder-product.svg';
+}
+
+async function ProductsSection({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const limit = Number(params.limit) || 12;
@@ -56,18 +65,16 @@ async function ProductsPageContent({ searchParams }: PageProps) {
     ? (CATEGORY_LABELS[categoria] || categoria)
     : query
     ? `"${query}"`
-    : 'Todas as peças';
+    : 'Destaques';
 
   return (
     <>
-      <div className="flex items-baseline justify-between mb-5">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {filteredProducts.length} {filteredProducts.length === 1 ? 'peça' : 'peças'}
-          </p>
-        </div>
-      </div>
+      <h2
+        className="text-2xl md:text-3xl font-bold text-center mb-8"
+        style={{ fontFamily: 'var(--font-playfair, Georgia, serif)' }}
+      >
+        {title}
+      </h2>
 
       {filteredProducts.length === 0 ? (
         <div className="text-center py-20">
@@ -90,98 +97,89 @@ async function ProductsPageContent({ searchParams }: PageProps) {
 export default async function HomePage({ searchParams }: PageProps) {
   const params = await searchParams;
 
-  let categoryItems: { category: string; count: number }[] = [];
+  let categoryItems: { category: string; count: number; image: string }[] = [];
   try {
     const categories = await productsService.getCategories();
-    categoryItems = categories.map(c => ({ category: c.category, count: c.products.length }));
+    categoryItems = categories.map(c => ({
+      category: c.category,
+      count: c.products.length,
+      image: c.products.length > 0 ? extractImage(c.products[0]) : '/placeholder-product.svg',
+    }));
   } catch {
     // silent failure if categories endpoint is unavailable
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-[#E8E0D5] sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <img src="/logo-segunda-aura.svg" alt="Segunda Aura" className="w-10 h-10" />
-            <span
-              className="text-3xl font-bold tracking-tight"
-              style={{ fontFamily: 'var(--font-playfair, Georgia, serif)', fontStyle: 'italic', color: '#A0522D' }}
-            >
-              Segunda Aura
-            </span>
-          </Link>
-          <Link
-            href="/login"
-            className="flex items-center gap-1.5 text-sm text-muted-foreground border border-[#E8E0D5] px-3 py-1.5 rounded-lg hover:bg-muted transition-colors"
+    <div className="min-h-screen flex flex-col bg-white">
+      <SiteHeader
+        categories={categoryItems}
+        selectedCategory={params.categoria}
+        selectedSize={params.tamanho}
+      />
+
+      {/* Hero — Logo como protagonista */}
+      <section className="py-16 md:py-24 text-center">
+        <Link href="/" className="inline-block">
+          <img
+            src="/logo-segunda-aura.svg"
+            alt="Segunda Aura"
+            className="w-14 h-14 mx-auto mb-4"
+          />
+          <h1
+            className="text-4xl md:text-5xl font-bold tracking-tight"
+            style={{ fontFamily: 'var(--font-playfair, Georgia, serif)', fontStyle: 'italic', color: '#A0522D' }}
           >
-            <Shield className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Admin</span>
-          </Link>
-        </div>
-      </header>
+            Segunda Aura
+          </h1>
+        </Link>
+      </section>
 
-      {/* Layout principal */}
-      <div className="container mx-auto px-4 py-8 flex-1">
-        <div className="lg:flex lg:gap-10">
+      {/* Categorias — cards com imagem */}
+      {categoryItems.length > 0 && (
+        <section className="px-5 pb-16">
+          <h2
+            className="text-2xl md:text-3xl font-bold text-center mb-8"
+            style={{ fontFamily: 'var(--font-playfair, Georgia, serif)' }}
+          >
+            Categorias
+          </h2>
+          <CategoryCarousel categories={categoryItems} selectedCategory={params.categoria} />
+        </section>
+      )}
 
-          {/* Sidebar - apenas desktop */}
-          <aside className="hidden lg:block w-52 flex-shrink-0">
-            <div className="sticky top-24">
-              <FilterSidebar
-                categories={categoryItems}
-                selectedCategory={params.categoria}
-                selectedSize={params.tamanho}
-              />
+      {/* Produtos */}
+      <section className="px-5 pb-16 flex-1">
+        <Suspense
+          fallback={
+            <div className="flex justify-center py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-foreground border-t-transparent" />
             </div>
-          </aside>
+          }
+        >
+          <ProductsSection searchParams={searchParams} />
+        </Suspense>
+      </section>
 
-          {/* ConteÃºdo principal */}
-          <div className="flex-1 min-w-0">
-            {/* Categorias (strip horizontal) */}
-            <CategoryCarousel categories={categoryItems} selectedCategory={params.categoria} />
-
-            {/* Produtos */}
-            <Suspense
-              fallback={
-                <div className="flex justify-center py-20">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#A0522D] border-t-transparent" />
-                </div>
-              }
-            >
-              <ProductsPageContent searchParams={searchParams} />
-            </Suspense>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer - apenas desktop */}
-      <footer className="hidden lg:block border-t border-[#E8E0D5] bg-white py-10">
-        <div className="container mx-auto px-4 text-center">
+      {/* Footer */}
+      <footer className="border-t border-border bg-white py-10">
+        <div className="text-center px-5">
           <p
             className="text-lg font-semibold text-foreground mb-1"
             style={{ fontFamily: 'var(--font-playfair, Georgia, serif)', fontStyle: 'italic' }}
           >
-            Segunda Aura Brechó
+            Segunda Aura
           </p>
-          <p className="text-sm text-muted-foreground">Sustentabilidade e estilo em cada peça</p>
-          <p className="text-xs text-muted-foreground mt-4">
-            &copy; {new Date().getFullYear()} Segunda Aura Brechó. Todos os direitos reservados.
+          <p className="text-xs text-muted-foreground mt-1">
+            Sustentabilidade e estilo em cada peça
+          </p>
+          <p className="text-[11px] text-muted-foreground/60 mt-4">
+            &copy; {new Date().getFullYear()} Segunda Aura Brechó
           </p>
         </div>
       </footer>
 
-      {/* Bottom Nav - apenas mobile */}
-      <MobileBottomNav
-        categories={categoryItems}
-        selectedCategory={params.categoria}
-        selectedSize={params.tamanho}
-        whatsappNumber={env.whatsappNumber}
-      />
-
-      {/* Espaço para o bottom nav no mobile */}
-      <div className="h-16 lg:hidden" />
+      {/* WhatsApp flutuante */}
+      <WhatsAppFloat number={env.whatsappNumber} />
     </div>
   );
 }

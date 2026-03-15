@@ -1,8 +1,10 @@
 ﻿'use client';
 
+import { useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
-import { cn } from '@/shared/lib/utils';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ProductImage } from '@/shared/components/ProductImage';
 
 const CATEGORY_LABELS: Record<string, string> = {
   calca: 'Calças',
@@ -12,72 +14,80 @@ const CATEGORY_LABELS: Record<string, string> = {
   vestido: 'Vestidos',
 };
 
-function Pill({ active, disabled, onClick, children }: {
-  active?: boolean;
-  disabled?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        'flex-shrink-0 text-sm px-4 py-1.5 rounded-full border transition-all whitespace-nowrap',
-        active
-          ? 'border-[#A0522D] bg-[#A0522D] text-white font-medium'
-          : 'border-[#E8E0D5] bg-white text-muted-foreground hover:border-[#A0522D] hover:text-[#A0522D]',
-        disabled && 'opacity-60 pointer-events-none',
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
 interface CategoryCarouselProps {
-  categories: { category: string; count: number }[];
+  categories: { category: string; count: number; image: string }[];
   selectedCategory?: string;
 }
 
 export function CategoryCarousel({ categories, selectedCategory }: CategoryCarouselProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
-  const navigate = (categoria: string | null) => {
+  const navigate = (cat: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (categoria) params.set('categoria', categoria);
-    else params.delete('categoria');
+    if (selectedCategory === cat) params.delete('categoria');
+    else params.set('categoria', cat);
     params.set('page', '1');
     startTransition(() => router.push(`/?${params.toString()}`));
   };
 
-  const totalCount = categories.reduce((acc, c) => acc + c.count, 0);
+  const scroll = (dir: 'left' | 'right') => {
+    if (!scrollRef.current) return;
+    const amount = scrollRef.current.clientWidth;
+    scrollRef.current.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
+  };
+
+  if (categories.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-1 mb-6 scrollbar-hide">
-      <Pill active={!selectedCategory} disabled={isPending} onClick={() => navigate(null)}>
-        Tudo
-        {totalCount > 0 && <span className="ml-1.5 opacity-60 text-xs">{totalCount}</span>}
-      </Pill>
-
-      {categories.map((cat) => {
-        const isSelected = selectedCategory === cat.category;
-        const label = CATEGORY_LABELS[cat.category] || cat.category;
-        return (
-          <Pill
+    <div>
+      <div
+        ref={scrollRef}
+        className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+      >
+        {categories.map(cat => (
+          <button
             key={cat.category}
-            active={isSelected}
-            disabled={isPending}
-            onClick={() => navigate(isSelected ? null : cat.category)}
+            type="button"
+            onClick={() => navigate(cat.category)}
+            className="relative flex-shrink-0 w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)] aspect-[3/4] rounded-lg overflow-hidden group snap-start"
           >
-            {label}
-            {cat.count > 0 && <span className="ml-1.5 opacity-60 text-xs">{cat.count}</span>}
-          </Pill>
-        );
-      })}
+            <div className="absolute inset-0">
+              <ProductImage
+                src={cat.image}
+                alt={CATEGORY_LABELS[cat.category] || cat.category}
+              />
+            </div>
+            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
+            <span className="absolute bottom-4 left-4 text-white text-sm font-medium tracking-wide">
+              {CATEGORY_LABELS[cat.category] || cat.category}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {categories.length > 2 && (
+        <div className="flex justify-center gap-8 mt-6">
+          <button
+            type="button"
+            onClick={() => scroll('left')}
+            aria-label="Anterior"
+            className="text-foreground/40 hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => scroll('right')}
+            aria-label="Próximo"
+            className="text-foreground/40 hover:text-foreground transition-colors"
+          >
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
