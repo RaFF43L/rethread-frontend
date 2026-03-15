@@ -19,6 +19,7 @@ import {
 import { Upload, X, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { compressImage } from '@/shared/utils/compress-image';
 
 const CATEGORIES = ['calca', 'blusa', 'camiseta', 'short', 'vestido'] as const;
 const SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'Único'] as const;
@@ -65,16 +66,28 @@ export function ProductForm({
     defaultValues,
   });
 
-  const handleFiles = (selected: FileList | null) => {
+  const [isCompressing, setIsCompressing] = useState(false);
+
+  const handleFiles = async (selected: FileList | null) => {
     if (!selected) return;
     setImageError(null);
-    const newFiles = Array.from(selected).filter(f => f.type.startsWith('image/'));
-    setFiles(prev => [...prev, ...newFiles]);
-    newFiles.forEach(f => {
-      const reader = new FileReader();
-      reader.onload = e => setPreviews(prev => [...prev, e.target?.result as string]);
-      reader.readAsDataURL(f);
-    });
+    const imageFiles = Array.from(selected).filter(f => f.type.startsWith('image/'));
+    if (imageFiles.length === 0) return;
+
+    setIsCompressing(true);
+    try {
+      const compressed = await Promise.all(imageFiles.map(compressImage));
+      setFiles(prev => [...prev, ...compressed]);
+      compressed.forEach(f => {
+        const reader = new FileReader();
+        reader.onload = e => setPreviews(prev => [...prev, e.target?.result as string]);
+        reader.readAsDataURL(f);
+      });
+    } catch {
+      setImageError('Erro ao processar imagens. Tente novamente.');
+    } finally {
+      setIsCompressing(false);
+    }
   };
 
   const removeImage = (index: number) => {
@@ -133,11 +146,21 @@ export function ProductForm({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="w-full border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-[#A0522D] transition-colors"
+            disabled={isCompressing}
+            className="w-full border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-[#A0522D] transition-colors disabled:opacity-50"
           >
-            <Upload className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">Clique para adicionar fotos</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">PNG, JPG, WEBP</p>
+            {isCompressing ? (
+              <>
+                <Loader2 className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2 animate-spin" />
+                <p className="text-sm text-muted-foreground">Comprimindo imagens...</p>
+              </>
+            ) : (
+              <>
+                <Upload className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Clique para adicionar fotos</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">PNG, JPG, WEBP</p>
+              </>
+            )}
           </button>
           <input
             ref={fileInputRef}

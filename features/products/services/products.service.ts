@@ -1,6 +1,7 @@
 import { apiClient } from '@/shared/lib/api-client';
 import { Product, PaginatedResponse, ProductBackend, BackendPaginatedResponse, CategoryGroup, DashboardStats, DashboardFilterParams } from '@/shared/types';
 import { getImageUrl } from '@/shared/lib/env';
+import { cookies } from 'next/headers';
 
 export interface GetProductsParams {
   page?: number;
@@ -116,6 +117,11 @@ export class ProductsService {
   }
 
   async getDashboard(params: DashboardFilterParams = {}): Promise<DashboardStats> {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(
+      process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'segunda_aura_token'
+    )?.value;
+
     const searchParams = new URLSearchParams();
     if (params.startDate) searchParams.append('startDate', params.startDate);
     if (params.endDate) searchParams.append('endDate', params.endDate);
@@ -125,7 +131,12 @@ export class ProductsService {
     if (params.cor) searchParams.append('cor', params.cor);
     if (params.status) searchParams.append('status', params.status);
     const query = searchParams.toString();
-    return apiClient.get<DashboardStats>(`/products/dashboard${query ? `?${query}` : ''}`);
+    const endpoint = `/products/dashboard${query ? `?${query}` : ''}`;
+
+    if (token) {
+      return apiClient.withAuth(token).get<DashboardStats>(endpoint);
+    }
+    return apiClient.get<DashboardStats>(endpoint);
   }
 
   async getProductById(id: string): Promise<Product> {
