@@ -49,6 +49,11 @@ export function SiteHeader({ categories, selectedCategory, selectedSize }: SiteH
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [searchTerm, searchOpen, pushSearch]);
 
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [menuOpen]);
+
   const closeSearch = () => {
     setSearchOpen(false);
     if (searchTerm) {
