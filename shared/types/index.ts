@@ -13,6 +13,7 @@ export interface ProductBackend {
   urlS3?: string;
   images?: ProductImage[];
   imageUrls?: string[];
+  videos?: { id: number; urlS3: string }[];
   status: 'available' | 'unavailable';
   descricao: string;
   preco: string;
