@@ -124,7 +124,7 @@ export function ProductForm({
     }
   };
 
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = async (values: FormValues) => {
     if (existingCount + newCount + videoFiles.length === 0) {
       setImageError('Adicione pelo menos uma imagem ou vídeo do produto.');
       return;
@@ -145,11 +145,23 @@ export function ProductForm({
     }
 
     startTransition(async () => {
-      const result = await onSubmitAction(data);
-      if (result.success) {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL 
+        const endpoint = `${apiUrl}/products`;
+        const token = document.cookie.split('; ').find(row => row.startsWith('rethread_admin_token='))?.split('=')[1];
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          body: data,
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (!response.ok) {
+          const error = await response.text();
+          setServerError(error || 'Erro ao criar produto');
+          return;
+        }
         router.push(redirectTo);
-      } else {
-        setServerError(result.error);
+      } catch (err: any) {
+        setServerError(err?.message || 'Erro ao criar produto');
       }
     });
   };
