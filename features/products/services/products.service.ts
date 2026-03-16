@@ -21,6 +21,7 @@ export class ProductsService {
 
   private adaptProduct(backend: ProductBackend): Product {
     let images: string[] = [];
+    let videos: string[] = [];
 
     if (backend.imageUrls && backend.imageUrls.length > 0) {
       images = backend.imageUrls;
@@ -36,6 +37,10 @@ export class ProductsService {
       images = ['/placeholder-product.svg'];
     }
 
+    if (backend.videos && Array.isArray(backend.videos) && backend.videos.length > 0) {
+      videos = backend.videos.map((v: any) => v.urlS3).filter(Boolean);
+    }
+
     return {
       id: backend.codigoIdentificacao,
       numericId: backend.id,
@@ -44,6 +49,7 @@ export class ProductsService {
       price: parseFloat(backend.preco),
       color: backend.cor,
       images,
+      videos,
       category: backend.category,
       size: backend.size,
       available: backend.status === 'available',

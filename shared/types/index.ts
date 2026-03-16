@@ -35,6 +35,7 @@ export interface Product {
   price: number;
   color: string;
   images: string[];
+  videos: string[];
   category?: string;
   size?: string;
   available: boolean;

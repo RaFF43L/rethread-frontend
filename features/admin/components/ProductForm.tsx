@@ -58,6 +58,8 @@ export function ProductForm({
   const router = useRouter();
   const [previews, setPreviews] = useState<string[]>(existingImages);
   const [files, setFiles] = useState<File[]>([]);
+  const [videoPreviews, setVideoPreviews] = useState<string[]>([]);
+  const [videoFiles, setVideoFiles] = useState<File[]>([]);
   const [removedExisting, setRemovedExisting] = useState<string[]>([]);
   const [imageError, setImageError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -76,22 +78,35 @@ export function ProductForm({
   const handleFiles = async (selected: FileList | null) => {
     if (!selected) return;
     setImageError(null);
-    const imageFiles = Array.from(selected).filter(f => f.type.startsWith('image/'));
-    if (imageFiles.length === 0) return;
+    const imageFiles: File[] = Array.from(selected).filter((f): f is File => f && typeof f === 'object' && f.type.startsWith('image/'));
+    const videoFilesArr: File[] = Array.from(selected).filter((f): f is File => f && typeof f === 'object' && f.type.startsWith('video/'));
 
-    setIsCompressing(true);
-    try {
-      const compressed = await Promise.all(imageFiles.map(compressImage));
-      setFiles(prev => [...prev, ...compressed]);
-      compressed.forEach(f => {
+    // Imagens
+    if (imageFiles.length > 0) {
+      setIsCompressing(true);
+      try {
+        const compressed = await Promise.all(imageFiles.map(compressImage));
+        setFiles(prev => [...prev, ...compressed]);
+        compressed.forEach((f: File) => {
+          const reader = new FileReader();
+          reader.onload = (e: ProgressEvent<FileReader>) => setPreviews(prev => [...prev, e.target?.result as string]);
+          reader.readAsDataURL(f);
+        });
+      } catch {
+        setImageError('Erro ao processar imagens. Tente novamente.');
+      } finally {
+        setIsCompressing(false);
+      }
+    }
+
+    // Vídeos
+    if (videoFilesArr.length > 0) {
+      setVideoFiles(prev => [...prev, ...videoFilesArr]);
+      videoFilesArr.forEach((f: File) => {
         const reader = new FileReader();
-        reader.onload = e => setPreviews(prev => [...prev, e.target?.result as string]);
+        reader.onload = (e: ProgressEvent<FileReader>) => setVideoPreviews(prev => [...prev, e.target?.result as string]);
         reader.readAsDataURL(f);
       });
-    } catch {
-      setImageError('Erro ao processar imagens. Tente novamente.');
-    } finally {
-      setIsCompressing(false);
     }
   };
 
@@ -103,7 +118,6 @@ export function ProductForm({
       }
       setPreviews(prev => prev.filter((_, i) => i !== index));
     } else {
-      const fileIndex = index - existingImages.length + removedExisting.length;
       const adjustedFileIndex = index - (existingImages.length - removedExisting.length);
       setFiles(prev => prev.filter((_, i) => i !== adjustedFileIndex));
       setPreviews(prev => prev.filter((_, i) => i !== index));
@@ -111,8 +125,8 @@ export function ProductForm({
   };
 
   const onSubmit = (values: FormValues) => {
-    if (existingCount + newCount === 0) {
-      setImageError('Adicione pelo menos uma imagem do produto.');
+    if (existingCount + newCount + videoFiles.length === 0) {
+      setImageError('Adicione pelo menos uma imagem ou vídeo do produto.');
       return;
     }
     setServerError(null);
@@ -124,7 +138,8 @@ export function ProductForm({
     data.append('preco', String(values.preco));
     data.append('category', values.category);
     data.append('size', values.size);
-    files.forEach(f => data.append('images', f));
+    files.forEach((f: File) => data.append('images', f));
+    videoFiles.forEach((f: File) => data.append('videos', f));
     if (removedExisting.length > 0) {
       data.append('removedImages', JSON.stringify(removedExisting));
     }
@@ -143,7 +158,7 @@ export function ProductForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Fotos do Produto</CardTitle>
+          <CardTitle className="text-sm font-semibold">Fotos e Vídeos do Produto</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <button
@@ -153,25 +168,25 @@ export function ProductForm({
             className="w-full border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-[#A0522D] transition-colors disabled:opacity-50"
           >
             {isCompressing ? (
-              <>
+              <span>
                 <Loader2 className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2 animate-spin" />
                 <p className="text-sm text-muted-foreground">Comprimindo imagens...</p>
-              </>
+              </span>
             ) : (
-              <>
+              <span>
                 <Upload className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Clique para adicionar fotos</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">PNG, JPG, WEBP</p>
-              </>
+                <p className="text-sm text-muted-foreground">Clique para adicionar fotos ou vídeos</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">PNG, JPG, WEBP, MP4, WEBM</p>
+              </span>
             )}
           </button>
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,video/mp4,video/webm"
             multiple
             className="hidden"
-            onChange={e => handleFiles(e.target.files)}
+            onChange={e => handleFiles(e.target?.files ?? null)}
           />
 
           {imageError && (
@@ -180,9 +195,9 @@ export function ProductForm({
             </p>
           )}
 
-          {previews.length > 0 && (
+          {(previews.length > 0 || videoPreviews.length > 0) && (
             <div className="flex flex-wrap gap-3">
-              {previews.map((src, i) => {
+              {previews.map((src: string, i: number) => {
                 const isRemoved = i < existingImages.length && removedExisting.includes(existingImages[i]);
                 if (isRemoved) return null;
                 return (
@@ -200,6 +215,13 @@ export function ProductForm({
                   </div>
                 );
               })}
+              {videoPreviews.map((src: string, i: number) => (
+                <div key={`video-${i}`} className="relative group">
+                  <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
+                    <video src={src} controls className="object-cover w-full h-full" />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>

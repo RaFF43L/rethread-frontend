@@ -22,7 +22,7 @@ export function ProductCard({ product }: ProductCardProps) {
       }}
     >
       <div className="relative overflow-hidden aspect-[3/4] bg-stone-50 mb-3">
-        <ImageCarousel images={product.images} alt={product.name} />
+        <ImageCarousel images={product.images} videos={product.videos} alt={product.name} />
 
         {!product.available && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
