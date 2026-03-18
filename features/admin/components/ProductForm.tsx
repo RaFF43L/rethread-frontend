@@ -23,6 +23,7 @@ import Image from 'next/image';
 import { compressImage } from '@/shared/utils/compress-image';
 import type { ActionResult } from '@/app/admin/actions';
 import { getPresignedUrl, uploadToS3, registerProductImage } from '@/features/products/services/s3-upload';
+import { registerProductVideo } from '@/features/products/services/register-video';
 import { productsService } from '@/features/products/services/products.service';
 import { apiClient } from '@/shared/lib/api-client';
 
@@ -156,7 +157,7 @@ export function ProductForm({
         for (const file of videoFiles) {
           const { url, key } = await getPresignedUrl(productId, file.name, file.type, token);
           await uploadToS3(url, file);
-          await registerProductImage(productId, key, token);
+          await registerProductVideo(productId, key, token);
         }
 
         if (removedExisting.length > 0) {
