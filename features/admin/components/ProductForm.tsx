@@ -22,6 +22,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { compressImage } from '@/shared/utils/compress-image';
 import type { ActionResult } from '@/app/admin/actions';
+import { getPresignedUrl, uploadToS3, registerProductImage } from '@/features/products/services/s3-upload';
+import { productsService } from '@/features/products/services/products.service';
+import { apiClient } from '@/shared/lib/api-client';
 
 const CATEGORIES = ['calca', 'blusa', 'camiseta', 'short', 'vestido'] as const;
 const SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'Único'] as const;
@@ -131,34 +134,35 @@ export function ProductForm({
     }
     setServerError(null);
 
-    const data = new FormData();
-    data.append('marca', values.marca);
-    data.append('cor', values.cor);
-    data.append('descricao', values.descricao);
-    data.append('preco', String(values.preco));
-    data.append('category', values.category);
-    data.append('size', values.size);
-    files.forEach((f: File) => data.append('images', f));
-    videoFiles.forEach((f: File) => data.append('videos', f));
-    if (removedExisting.length > 0) {
-      data.append('removedImages', JSON.stringify(removedExisting));
-    }
-
     startTransition(async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL 
-        const endpoint = `${apiUrl}/products`;
         const token = document.cookie.split('; ').find(row => row.startsWith('rethread_admin_token='))?.split('=')[1];
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          body: data,
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        if (!response.ok) {
-          const error = await response.text();
-          setServerError(error || 'Erro ao criar produto');
-          return;
+        const productPayload = {
+          marca: values.marca,
+          cor: values.cor,
+          descricao: values.descricao,
+          preco: String(values.preco),
+          category: values.category,
+          size: values.size,
+        };
+        const createdProduct = await productsService.createProduct(productPayload as any, token || '');
+        const productId = createdProduct.id;
+
+        for (const file of files) {
+          const { url, key } = await getPresignedUrl(productId, file.name, file.type, token);
+          await uploadToS3(url, file);
+          await registerProductImage(productId, key, token);
         }
+        for (const file of videoFiles) {
+          const { url, key } = await getPresignedUrl(productId, file.name, file.type, token);
+          await uploadToS3(url, file);
+          await registerProductImage(productId, key, token);
+        }
+
+        if (removedExisting.length > 0) {
+          await apiClient.post(`/products/${productId}/remove-images`, { images: removedExisting });
+        }
+
         router.push(redirectTo);
       } catch (err: any) {
         setServerError(err?.message || 'Erro ao criar produto');
