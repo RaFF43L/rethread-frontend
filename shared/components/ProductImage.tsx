@@ -10,14 +10,16 @@ interface ProductImageProps {
   className?: string;
   priority?: boolean;
   sizes?: string;
+  objectFit?: 'cover' | 'contain';
 }
 
-export function ProductImage({ 
-  src, 
-  alt, 
+export function ProductImage({
+  src,
+  alt,
   className = '',
   priority = false,
-  sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+  sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw',
+  objectFit = 'cover',
 }: ProductImageProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
@@ -42,7 +44,7 @@ export function ProductImage({
         src={imageError ? fallbackSrc : src}
         alt={alt}
         fill
-        className={`object-cover transition-opacity duration-300 ${
+        className={`transition-opacity duration-300 ${objectFit === 'contain' ? 'object-contain' : 'object-cover'} ${
           imageLoading ? 'opacity-0' : 'opacity-100'
         }`}
         sizes={sizes}

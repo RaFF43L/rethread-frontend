@@ -56,7 +56,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: "#D4988C",
+  themeColor: "#000000",
 };
 
 export default function RootLayout({
@@ -67,8 +67,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
-        <link rel="icon" href="/logo-segunda-aura.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/logo-segunda-aura.svg" />
+        <link rel="icon" href="/logo-segunda-aura.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/logo-segunda-aura.png" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body

@@ -37,7 +37,7 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.size && <span>Tam: {product.size}</span>}
           </div>
           <div className="flex items-center justify-between mt-3">
-            <span className="text-sm font-semibold text-[#A0522D]">{formatPrice(product.price)}</span>
+            <span className="text-sm font-semibold text-[#000000]">{formatPrice(product.price)}</span>
             <ProductActions
               numericId={product.numericId}
               name={product.name}

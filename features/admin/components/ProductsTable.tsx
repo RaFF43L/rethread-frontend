@@ -62,7 +62,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
                 <span className="text-sm text-gray-600">{product.size || '—'}</span>
               </td>
               <td className="px-5 py-4 whitespace-nowrap">
-                <span className="text-sm font-semibold text-[#A0522D]">{formatPrice(product.price)}</span>
+                <span className="text-sm font-semibold text-[#000000]">{formatPrice(product.price)}</span>
               </td>
               <td className="px-5 py-4 whitespace-nowrap">
                 {product.available ? (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useRef, useState, useTransition, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
-import { Upload, X, Loader2, AlertCircle } from 'lucide-react';
+import { Upload, X, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { compressImage } from '@/shared/utils/compress-image';
@@ -31,15 +31,19 @@ const CATEGORIES = ['calca', 'blusa', 'camiseta', 'short', 'vestido'] as const;
 const SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'Único'] as const;
 
 const schema = z.object({
-  marca: z.string().min(1, 'Informe a marca'),
+  marca: z.string().optional(),
   cor: z.string().min(1, 'Informe a cor'),
   descricao: z.string().min(5, 'Descrição muito curta'),
   preco: z.number({ error: 'Informe um valor válido' }).positive('O preço deve ser maior que zero'),
   category: z.enum(CATEGORIES, { error: 'Selecione a categoria' }),
-  size: z.enum(SIZES, { error: 'Selecione o tamanho' }),
+  size: z.string().min(1, 'Informe o tamanho'),
 });
 
 type FormValues = z.infer<typeof schema>;
+
+type MediaItem =
+  | { kind: 'existing'; url: string; src: string }
+  | { kind: 'new'; file: File; src: string };
 
 export interface ProductFormProps {
   defaultValues?: Partial<FormValues>;
@@ -60,42 +64,53 @@ export function ProductForm({
 }: ProductFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const [previews, setPreviews] = useState<string[]>(existingImages);
-  const [files, setFiles] = useState<File[]>([]);
-  const [videoPreviews, setVideoPreviews] = useState<string[]>([]);
+
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>(
+    existingImages.map(url => ({ kind: 'existing', url, src: url }))
+  );
   const [videoFiles, setVideoFiles] = useState<File[]>([]);
-  const [removedExisting, setRemovedExisting] = useState<string[]>([]);
+  const [videoPreviews, setVideoPreviews] = useState<string[]>([]);
   const [imageError, setImageError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
 
-  const existingCount = existingImages.length - removedExisting.length;
-  const newCount = files.length;
-
-  const { register, handleSubmit, control, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues,
   });
 
-  const [isCompressing, setIsCompressing] = useState(false);
+  const selectedCategory = watch('category');
+
+  // Reset size when switching to/from calça to avoid stale enum values
+  useEffect(() => {
+    setValue('size', '' as any);
+  }, [selectedCategory, setValue]);
 
   const handleFiles = async (selected: FileList | null) => {
     if (!selected) return;
     setImageError(null);
-    const imageFiles: File[] = Array.from(selected).filter((f): f is File => f && typeof f === 'object' && f.type.startsWith('image/'));
-    const videoFilesArr: File[] = Array.from(selected).filter((f): f is File => f && typeof f === 'object' && f.type.startsWith('video/'));
+    const imageFiles = Array.from(selected).filter(f => f.type.startsWith('image/'));
+    const videoFilesArr = Array.from(selected).filter(f => f.type.startsWith('video/'));
 
-    // Imagens
     if (imageFiles.length > 0) {
       setIsCompressing(true);
       try {
         const compressed = await Promise.all(imageFiles.map(compressImage));
-        setFiles(prev => [...prev, ...compressed]);
-        compressed.forEach((f: File) => {
-          const reader = new FileReader();
-          reader.onload = (e: ProgressEvent<FileReader>) => setPreviews(prev => [...prev, e.target?.result as string]);
-          reader.readAsDataURL(f);
-        });
+        const newItems = await Promise.all(
+          compressed.map(
+            file =>
+              new Promise<MediaItem>(resolve => {
+                const reader = new FileReader();
+                reader.onload = e =>
+                  resolve({ kind: 'new', file, src: e.target?.result as string });
+                reader.readAsDataURL(file);
+              })
+          )
+        );
+        setMediaItems(prev => [...prev, ...newItems]);
       } catch {
         setImageError('Erro ao processar imagens. Tente novamente.');
       } finally {
@@ -103,33 +118,59 @@ export function ProductForm({
       }
     }
 
-    // Vídeos
     if (videoFilesArr.length > 0) {
       setVideoFiles(prev => [...prev, ...videoFilesArr]);
-      videoFilesArr.forEach((f: File) => {
+      videoFilesArr.forEach(f => {
         const reader = new FileReader();
-        reader.onload = (e: ProgressEvent<FileReader>) => setVideoPreviews(prev => [...prev, e.target?.result as string]);
+        reader.onload = e =>
+          setVideoPreviews(prev => [...prev, e.target?.result as string]);
         reader.readAsDataURL(f);
       });
     }
   };
 
-  const removeImage = (index: number) => {
-    if (index < existingImages.length) {
-      const url = existingImages[index];
-      if (!removedExisting.includes(url)) {
-        setRemovedExisting(prev => [...prev, url]);
-      }
-      setPreviews(prev => prev.filter((_, i) => i !== index));
-    } else {
-      const adjustedFileIndex = index - (existingImages.length - removedExisting.length);
-      setFiles(prev => prev.filter((_, i) => i !== adjustedFileIndex));
-      setPreviews(prev => prev.filter((_, i) => i !== index));
+  const removeItem = (index: number) => {
+    setMediaItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const moveItem = (index: number, dir: 'left' | 'right') => {
+    const target = dir === 'left' ? index - 1 : index + 1;
+    if (target < 0 || target >= mediaItems.length) return;
+    setMediaItems(prev => {
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
+
+  const handleDragStart = (index: number) => setDragFrom(index);
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (index !== dragOver) setDragOver(index);
+  };
+
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (dragFrom !== null && dragFrom !== index) {
+      setMediaItems(prev => {
+        const next = [...prev];
+        const [moved] = next.splice(dragFrom, 1);
+        next.splice(index, 0, moved);
+        return next;
+      });
     }
+    setDragFrom(null);
+    setDragOver(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragFrom(null);
+    setDragOver(null);
   };
 
   const onSubmit = async (values: FormValues) => {
-    if (existingCount + newCount + videoFiles.length === 0) {
+    if (mediaItems.length + videoFiles.length === 0) {
       setImageError('Adicione pelo menos uma imagem ou vídeo do produto.');
       return;
     }
@@ -137,31 +178,51 @@ export function ProductForm({
 
     startTransition(async () => {
       try {
-        const token = document.cookie.split('; ').find(row => row.startsWith('rethread_admin_token='))?.split('=')[1];
+        const token = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('rethread_admin_token='))
+          ?.split('=')[1];
+
         const productPayload = {
-          marca: values.marca,
+          marca: values.marca || '',
           cor: values.cor,
           descricao: values.descricao,
           preco: String(values.preco),
           category: values.category,
           size: values.size,
         };
-        const createdProduct = await productsService.createProduct(productPayload as any, token || '');
+
+        const createdProduct = await productsService.createProduct(
+          productPayload as any,
+          token || ''
+        );
         const productId = createdProduct.id;
 
-        for (const file of files) {
-          const { url, key } = await getPresignedUrl(productId, file.name, file.type, token);
-          await uploadToS3(url, file);
-          await registerProductImage(productId, key, token);
+        for (const item of mediaItems) {
+          if (item.kind === 'new') {
+            const { url, key } = await getPresignedUrl(
+              productId,
+              item.file.name,
+              item.file.type,
+              token
+            );
+            await uploadToS3(url, item.file);
+            await registerProductImage(productId, key, token);
+          }
         }
+
         for (const file of videoFiles) {
           const { url, key } = await getPresignedUrl(productId, file.name, file.type, token);
           await uploadToS3(url, file);
           await registerProductVideo(productId, key, token);
         }
 
-        if (removedExisting.length > 0) {
-          await apiClient.post(`/products/${productId}/remove-images`, { images: removedExisting });
+        const remainingUrls = mediaItems
+          .filter((m): m is Extract<MediaItem, { kind: 'existing' }> => m.kind === 'existing')
+          .map(m => m.url);
+        const removedUrls = existingImages.filter(url => !remainingUrls.includes(url));
+        if (removedUrls.length > 0) {
+          await apiClient.post(`/products/${productId}/remove-images`, { images: removedUrls });
         }
 
         router.push(redirectTo);
@@ -182,7 +243,7 @@ export function ProductForm({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isCompressing}
-            className="w-full border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-[#A0522D] transition-colors disabled:opacity-50"
+            className="w-full border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-foreground transition-colors disabled:opacity-50"
           >
             {isCompressing ? (
               <span>
@@ -212,31 +273,78 @@ export function ProductForm({
             </p>
           )}
 
-          {(previews.length > 0 || videoPreviews.length > 0) && (
+          {(mediaItems.length > 0 || videoPreviews.length > 0) && (
             <div className="flex flex-wrap gap-3">
-              {previews.map((src: string, i: number) => {
-                const isRemoved = i < existingImages.length && removedExisting.includes(existingImages[i]);
-                if (isRemoved) return null;
-                return (
-                  <div key={i} className="relative group">
-                    <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
-                      <Image src={src} alt={`preview ${i + 1}`} fill className="object-cover" />
-                    </div>
+              {mediaItems.map((item, i) => (
+                <div
+                  key={i}
+                  draggable
+                  onDragStart={() => handleDragStart(i)}
+                  onDragOver={e => handleDragOver(e, i)}
+                  onDrop={e => handleDrop(e, i)}
+                  onDragEnd={handleDragEnd}
+                  className={[
+                    'relative cursor-grab active:cursor-grabbing transition-all select-none',
+                    dragFrom === i ? 'opacity-40 scale-95' : '',
+                    dragOver === i && dragFrom !== i
+                      ? 'ring-2 ring-foreground ring-offset-1 rounded-lg'
+                      : '',
+                  ].join(' ')}
+                >
+                  {/* Thumbnail */}
+                  <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
+                    <Image
+                      src={item.src}
+                      alt={`preview ${i + 1}`}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+
+                  {/* Capa badge */}
+                  {i === 0 && (
+                    <span className="absolute top-0.5 left-0.5 bg-black/60 text-white text-[9px] px-1 rounded leading-4">
+                      Capa
+                    </span>
+                  )}
+
+                  {/* X — sempre visível, vermelho */}
+                  <button
+                    type="button"
+                    onClick={() => removeItem(i)}
+                    className="absolute -top-1.5 -right-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center transition-colors z-10"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+
+                  {/* Mover esquerda (fallback mobile) */}
+                  {i > 0 && (
                     <button
                       type="button"
-                      onClick={() => removeImage(i)}
-                      className="absolute -top-1.5 -right-1.5 bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => moveItem(i, 'left')}
+                      className="absolute bottom-0 left-0 bg-black/50 hover:bg-black/70 text-white rounded-bl-lg w-6 h-6 flex items-center justify-center transition-colors z-10"
                     >
-                      <X className="w-3 h-3" />
+                      <ChevronLeft className="w-3.5 h-3.5" />
                     </button>
-                  </div>
-                );
-              })}
-              {videoPreviews.map((src: string, i: number) => (
-                <div key={`video-${i}`} className="relative group">
-                  <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
-                    <video src={src} controls className="object-cover w-full h-full" />
-                  </div>
+                  )}
+
+                  {/* Mover direita (fallback mobile) */}
+                  {i < mediaItems.length - 1 && (
+                    <button
+                      type="button"
+                      onClick={() => moveItem(i, 'right')}
+                      className="absolute bottom-0 right-0 bg-black/50 hover:bg-black/70 text-white rounded-br-lg w-6 h-6 flex items-center justify-center transition-colors z-10"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {videoPreviews.map((src, i) => (
+                <div key={`video-${i}`} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
+                  <video src={src} controls className="object-cover w-full h-full" />
                 </div>
               ))}
             </div>
@@ -250,7 +358,8 @@ export function ProductForm({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Marca" required htmlFor="marca" error={errors.marca?.message}>
+            {/* Marca — opcional */}
+            <FormField label="Marca" htmlFor="marca" error={errors.marca?.message}>
               <Input id="marca" placeholder="ex: Zara, H&M, Renner..." {...register('marca')} />
             </FormField>
             <FormField label="Cor" required htmlFor="cor" error={errors.cor?.message}>
@@ -269,7 +378,14 @@ export function ProductForm({
 
           <div className="grid grid-cols-3 gap-4">
             <FormField label="Preço (R$)" required htmlFor="preco" error={errors.preco?.message}>
-              <Input id="preco" type="number" min="0.01" step="0.01" placeholder="0,00" {...register('preco', { valueAsNumber: true })} />
+              <Input
+                id="preco"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="0,00"
+                {...register('preco', { valueAsNumber: true })}
+              />
             </FormField>
 
             <FormField label="Categoria" required error={errors.category?.message}>
@@ -293,23 +409,32 @@ export function ProductForm({
               />
             </FormField>
 
+            {/* Tamanho — input livre para calça, select para o resto */}
             <FormField label="Tamanho" required error={errors.size?.message}>
-              <Controller
-                name="size"
-                control={control}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SIZES.map(t => (
-                        <SelectItem key={t} value={t}>{t}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
+              {selectedCategory === 'calca' ? (
+                <Input
+                  id="size"
+                  placeholder="ex: 36, 38, 40..."
+                  {...register('size')}
+                />
+              ) : (
+                <Controller
+                  name="size"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SIZES.map(t => (
+                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              )}
             </FormField>
           </div>
         </CardContent>
@@ -326,9 +451,11 @@ export function ProductForm({
         <Button type="button" variant="outline" className="flex-1" asChild>
           <Link href="/admin/products">Cancelar</Link>
         </Button>
-        <Button type="submit" disabled={isPending} className="flex-1 bg-[#A0522D] hover:bg-[#8B4513]">
+        <Button type="submit" disabled={isPending} className="flex-1 bg-foreground hover:bg-foreground/80 text-background">
           {isPending ? (
-            <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {submittingLabel}</>
+            <>
+              <Loader2 className="w-4 h-4 animate-spin mr-2" /> {submittingLabel}
+            </>
           ) : (
             submitLabel
           )}

@@ -10,14 +10,16 @@ interface ImageCarouselProps {
   alt: string;
   className?: string;
   priority?: boolean;
+  objectFit?: 'cover' | 'contain';
 }
 
-export function ImageCarousel({ 
-  images, 
+export function ImageCarousel({
+  images,
   videos = [],
-  alt, 
+  alt,
   className = '',
-  priority = false 
+  priority = false,
+  objectFit = 'cover',
 }: ImageCarouselProps) {
   // Junta imagens e vídeos em um único array, mantendo a ordem: imagens primeiro, depois vídeos
   const media = [...images, ...videos];
@@ -65,7 +67,7 @@ export function ImageCarousel({
   if (media.length === 0) {
     return (
       <div className={`relative w-full h-full ${className}`}>
-        <ProductImage src={'/placeholder-product.svg'} alt={alt} priority={priority} />
+        <ProductImage src={'/placeholder-product.svg'} alt={alt} priority={priority} objectFit={objectFit} />
       </div>
     );
   }
@@ -96,6 +98,7 @@ export function ImageCarousel({
           src={currentMedia}
           alt={hasMultiple ? `${alt} - ${currentIndex + 1} de ${media.length}` : alt}
           priority={priority}
+          objectFit={objectFit}
         />
       )}
 

@@ -28,10 +28,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cream via-cream-light to-coral-light p-4">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-2 text-center pb-8">
-          <CardTitle className="text-3xl font-bold text-coral">
+          <CardTitle className="text-3xl font-bold text-foreground">
             Segunda Aura Brechó
           </CardTitle>
           <CardDescription className="text-base">
@@ -94,7 +94,7 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <Button variant="ghost" asChild className="text-muted-foreground hover:text-coral">
+            <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
               <a href="/">
                 <ArrowLeft className="w-4 h-4" />
                 Voltar para a loja

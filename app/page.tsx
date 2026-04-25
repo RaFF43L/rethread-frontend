@@ -118,19 +118,14 @@ export default async function HomePage({ searchParams }: PageProps) {
       />
 
       {/* Hero — Logo como protagonista */}
-      <section className="py-16 md:py-24 text-center">
+      <section className="py-12 md:py-20 text-center">
         <Link href="/" className="inline-block">
+          <h1 className="sr-only">Segunda Aura</h1>
           <img
-            src="/logo-segunda-aura.svg"
+            src="/logo-segunda-aura.png"
             alt="Segunda Aura"
-            className="w-14 h-14 mx-auto mb-4"
+            className="w-64 md:w-80 h-auto mx-auto"
           />
-          <h1
-            className="text-4xl md:text-5xl font-bold tracking-tight"
-            style={{ fontFamily: 'var(--font-playfair, Georgia, serif)', fontStyle: 'italic', color: '#A0522D' }}
-          >
-            Segunda Aura
-          </h1>
         </Link>
       </section>
 

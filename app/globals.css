@@ -1,46 +1,46 @@
 @import "tailwindcss";
 
 :root {
-  /* Segunda Aura - Paleta Premium */
-  --background: #F9F7F2;
-  --foreground: #1C1C1C;
-  
-  /* Terracota */
-  --coral: #A0522D;
-  --coral-light: #C2703A;
-  --coral-dark: #7A3A1F;
-  
-  /* Verde Musgo */
-  --olive: #4A5D4E;
-  --olive-light: #6B7F6E;
-  --olive-dark: #2D3D30;
-  
-  --cream: #F9F7F2;
+  /* Segunda Aura - Paleta Minimalista */
+  --background: #FFFFFF;
+  --foreground: #000000;
+
+  /* Neutros (anteriormente coral) */
+  --coral: #000000;
+  --coral-light: #333333;
+  --coral-dark: #000000;
+
+  /* Cinza médio (anteriormente olive) */
+  --olive: #666666;
+  --olive-light: #888888;
+  --olive-dark: #444444;
+
+  --cream: #FFFFFF;
   --cream-light: #FFFFFF;
-  --cream-dark: #EDE8DF;
-  
-  --accent: #A0522D;
+  --cream-dark: #F5F5F5;
+
+  --accent: #000000;
   --accent-foreground: #FFFFFF;
-  
+
   --card: #FFFFFF;
-  --card-foreground: #1C1C1C;
-  
+  --card-foreground: #000000;
+
   --popover: #FFFFFF;
-  --popover-foreground: #1C1C1C;
-  
-  --primary: #A0522D;
+  --popover-foreground: #000000;
+
+  --primary: #000000;
   --primary-foreground: #FFFFFF;
-  
-  --secondary: #4A5D4E;
-  --secondary-foreground: #FFFFFF;
-  
-  --muted: #F3EFE8;
-  --muted-foreground: #7A7068;
-  
-  --border: #E8E0D5;
-  --input: #E8E0D5;
-  --ring: #A0522D;
-  
+
+  --secondary: #F5F5F5;
+  --secondary-foreground: #000000;
+
+  --muted: #F5F5F5;
+  --muted-foreground: #888888;
+
+  --border: #E0E0E0;
+  --input: #E0E0E0;
+  --ring: #000000;
+
   --radius: 0.75rem;
 }
 

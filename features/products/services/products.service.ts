@@ -26,9 +26,9 @@ export class ProductsService {
     if (backend.imageUrls && backend.imageUrls.length > 0) {
       images = backend.imageUrls;
     } else if (backend.images && backend.images.length > 0) {
-      images = backend.images.map(img => 
-        getImageUrl(img.urlS3, '/placeholder-product.svg')
-      );
+      images = [...backend.images]
+        .sort((a, b) => a.id - b.id)
+        .map(img => getImageUrl(img.urlS3, '/placeholder-product.svg'));
     } else if (backend.imageUrl) {
       images = [backend.imageUrl];
     } else if (backend.urlS3) {

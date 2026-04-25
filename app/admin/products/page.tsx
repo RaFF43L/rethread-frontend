@@ -27,7 +27,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
           </p>
         </div>
 
-        <Button asChild className="bg-[#A0522D] hover:bg-[#8B4513]">
+        <Button asChild className="bg-[#000000] hover:bg-[#1A1A1A]">
           <Link href="/admin/products/new">
             <Plus className="w-4 h-4" />
             Novo Produto
@@ -38,7 +38,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
       {products.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <p className="text-gray-500 mb-4">Nenhum produto cadastrado</p>
-          <Button asChild className="bg-[#A0522D] hover:bg-[#8B4513]">
+          <Button asChild className="bg-[#000000] hover:bg-[#1A1A1A]">
             <Link href="/admin/products/new">
               <Plus className="w-4 h-4" />
               Cadastrar primeiro produto

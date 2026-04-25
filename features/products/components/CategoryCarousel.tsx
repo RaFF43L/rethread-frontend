@@ -41,6 +41,9 @@ export function CategoryCarousel({ categories, selectedCategory }: CategoryCarou
 
   if (categories.length === 0) return null;
 
+  const isPlaceholder = (src: string) =>
+    src === '/placeholder-product.svg' || src === '/placeholder-product.png';
+
   return (
     <div>
       <div
@@ -55,13 +58,23 @@ export function CategoryCarousel({ categories, selectedCategory }: CategoryCarou
             className="relative flex-shrink-0 w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)] aspect-[3/4] rounded-lg overflow-hidden group snap-start"
           >
             <div className="absolute inset-0">
-              <ProductImage
-                src={cat.image}
-                alt={CATEGORY_LABELS[cat.category] || cat.category}
-              />
+              {isPlaceholder(cat.image) ? (
+                <div className="w-full h-full bg-white flex items-center justify-center">
+                  <img
+                    src="/logo-segunda-aura.png"
+                    alt="Segunda Aura"
+                    className="w-4/5 h-auto"
+                  />
+                </div>
+              ) : (
+                <ProductImage
+                  src={cat.image}
+                  alt={CATEGORY_LABELS[cat.category] || cat.category}
+                />
+              )}
             </div>
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
-            <span className="absolute bottom-4 left-4 text-white text-sm font-medium tracking-wide">
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
+            <span className="absolute bottom-4 left-4 text-white text-sm font-medium tracking-wide drop-shadow">
               {CATEGORY_LABELS[cat.category] || cat.category}
             </span>
           </button>

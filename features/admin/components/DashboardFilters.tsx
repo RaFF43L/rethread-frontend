@@ -26,8 +26,8 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
       className={cn(
         'text-sm px-3 py-1.5 border rounded-full transition-all whitespace-nowrap',
         active
-          ? 'border-[#A0522D] bg-[#A0522D] text-white font-medium'
-          : 'border-[#E8E0D5] text-muted-foreground hover:border-[#A0522D] hover:text-[#A0522D]',
+          ? 'border-[#000000] bg-[#000000] text-white font-medium'
+          : 'border-[#E0E0E0] text-muted-foreground hover:border-[#000000] hover:text-[#000000]',
       )}
     >
       {label}
@@ -95,14 +95,14 @@ function FilterContent({ isPending }: { isPending: boolean }) {
             type="date"
             value={startDate}
             onChange={(e) => updateParam('startDate', e.target.value || null)}
-            className="text-sm border border-[#E8E0D5] rounded-lg px-3 py-1.5 text-gray-600 focus:outline-none focus:border-[#A0522D]"
+            className="text-sm border border-[#E0E0E0] rounded-lg px-3 py-1.5 text-gray-600 focus:outline-none focus:border-[#000000]"
           />
           <span className="text-xs text-muted-foreground">até</span>
           <input
             type="date"
             value={endDate}
             onChange={(e) => updateParam('endDate', e.target.value || null)}
-            className="text-sm border border-[#E8E0D5] rounded-lg px-3 py-1.5 text-gray-600 focus:outline-none focus:border-[#A0522D]"
+            className="text-sm border border-[#E0E0E0] rounded-lg px-3 py-1.5 text-gray-600 focus:outline-none focus:border-[#000000]"
           />
         </div>
       </div>
@@ -142,7 +142,7 @@ export function DashboardFilters() {
             <button
               type="button"
               onClick={clearFilters}
-              className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#A0522D] transition-colors"
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#000000] transition-colors"
             >
               <X className="w-3 h-3" />
               Limpar
@@ -160,14 +160,14 @@ export function DashboardFilters() {
           className={cn(
             'flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl border transition-colors w-full justify-center',
             hasFilters
-              ? 'border-[#A0522D] bg-[#A0522D]/5 text-[#A0522D] font-medium'
+              ? 'border-[#000000] bg-[#000000]/5 text-[#000000] font-medium'
               : 'border-gray-200 bg-white text-gray-600',
           )}
         >
           <div className="relative">
             <SlidersHorizontal className="w-4 h-4" />
             {hasFilters && (
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#A0522D]" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#000000]" />
             )}
           </div>
           Filtros
@@ -190,14 +190,14 @@ export function DashboardFilters() {
         )}
       >
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-[#E8E0D5]" />
+          <div className="w-10 h-1 rounded-full bg-[#E0E0E0]" />
         </div>
 
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[#E8E0D5]">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#E0E0E0]">
           <span className="font-semibold text-foreground">Filtros</span>
           <div className="flex items-center gap-3">
             {hasFilters && (
-              <button type="button" onClick={clearFilters} className="text-xs text-[#A0522D] underline underline-offset-2">
+              <button type="button" onClick={clearFilters} className="text-xs text-[#000000] underline underline-offset-2">
                 Limpar
               </button>
             )}

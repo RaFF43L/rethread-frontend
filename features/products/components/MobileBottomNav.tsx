@@ -77,11 +77,11 @@ export function MobileBottomNav({
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-[#E8E0D5]" />
+          <div className="w-10 h-1 rounded-full bg-[#E0E0E0]" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[#E8E0D5]">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#E0E0E0]">
           <span className="font-semibold text-foreground">Filtros</span>
           <div className="flex items-center gap-3">
             {hasFilters && (
@@ -91,7 +91,7 @@ export function MobileBottomNav({
                   startTransition(() => router.push('/'));
                   setDrawerOpen(false);
                 }}
-                className="text-xs text-[#A0522D] underline underline-offset-2"
+                className="text-xs text-[#000000] underline underline-offset-2"
               >
                 Limpar
               </button>
@@ -126,8 +126,8 @@ export function MobileBottomNav({
                     className={cn(
                       'text-sm px-4 py-1.5 rounded-full border transition-all',
                       isSelected
-                        ? 'border-[#A0522D] bg-[#A0522D] text-white font-medium'
-                        : 'border-[#E8E0D5] text-muted-foreground hover:border-[#A0522D] hover:text-[#A0522D]',
+                        ? 'border-[#000000] bg-[#000000] text-white font-medium'
+                        : 'border-[#E0E0E0] text-muted-foreground hover:border-[#000000] hover:text-[#000000]',
                     )}
                   >
                     {label}
@@ -153,8 +153,8 @@ export function MobileBottomNav({
                     className={cn(
                       'text-sm px-3 py-1.5 border rounded transition-all',
                       isSelected
-                        ? 'border-[#A0522D] bg-[#A0522D] text-white font-medium'
-                        : 'border-[#E8E0D5] text-muted-foreground hover:border-[#A0522D] hover:text-[#A0522D]',
+                        ? 'border-[#000000] bg-[#000000] text-white font-medium'
+                        : 'border-[#E0E0E0] text-muted-foreground hover:border-[#000000] hover:text-[#000000]',
                     )}
                   >
                     {size}
@@ -170,11 +170,11 @@ export function MobileBottomNav({
       </div>
 
       {/* Bottom Nav */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#E8E0D5]">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#E0E0E0]">
         <div className="flex items-center justify-around h-16">
           <Link
             href="/"
-            className="flex flex-col items-center gap-1 px-6 text-[#A0522D]"
+            className="flex flex-col items-center gap-1 px-6 text-[#000000]"
           >
             <Home className="w-5 h-5" />
             <span className="text-[10px] font-medium">Início</span>
@@ -185,13 +185,13 @@ export function MobileBottomNav({
             onClick={() => setDrawerOpen(prev => !prev)}
             className={cn(
               'flex flex-col items-center gap-1 px-6 transition-colors',
-              hasFilters || drawerOpen ? 'text-[#A0522D]' : 'text-muted-foreground',
+              hasFilters || drawerOpen ? 'text-[#000000]' : 'text-muted-foreground',
             )}
           >
             <div className="relative">
               <SlidersHorizontal className="w-5 h-5" />
               {hasFilters && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#A0522D]" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#000000]" />
               )}
             </div>
             <span className="text-[10px] font-medium">Filtros</span>

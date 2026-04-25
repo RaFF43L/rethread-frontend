@@ -4,14 +4,14 @@
   "description": "Moda sustentável e peças únicas de brechó",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F5F1E8",
-  "theme_color": "#D4988C",
+  "background_color": "#FFFFFF",
+  "theme_color": "#000000",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/logo-segunda-aura.svg",
+      "src": "/logo-segunda-aura.png",
       "sizes": "any",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],

@@ -36,7 +36,7 @@ function CategoryItem({ label, count, active, onClick }: {
       className={cn(
         'w-full text-left py-2 px-2.5 rounded-lg text-sm flex items-center justify-between transition-colors',
         active
-          ? 'text-[#A0522D] font-semibold bg-[#A0522D]/[0.08]'
+          ? 'text-[#000000] font-semibold bg-[#000000]/[0.08]'
           : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
       )}
     >
@@ -58,8 +58,8 @@ function SizeChip({ label, active, onClick }: {
       className={cn(
         'text-xs px-2.5 py-1.5 border rounded transition-all',
         active
-          ? 'border-[#A0522D] bg-[#A0522D] text-white font-medium'
-          : 'border-[#E8E0D5] text-muted-foreground hover:border-[#A0522D] hover:text-[#A0522D]',
+          ? 'border-[#000000] bg-[#000000] text-white font-medium'
+          : 'border-[#E0E0E0] text-muted-foreground hover:border-[#000000] hover:text-[#000000]',
       )}
     >
       {label}
@@ -139,7 +139,7 @@ export function FilterSidebar({ categories, selectedCategory, selectedSize }: Fi
         <button
           type="button"
           onClick={() => startTransition(() => router.push('/'))}
-          className="text-xs text-muted-foreground hover:text-[#A0522D] underline underline-offset-2 w-full text-left transition-colors"
+          className="text-xs text-muted-foreground hover:text-[#000000] underline underline-offset-2 w-full text-left transition-colors"
         >
           Limpar filtros
         </button>
