@@ -1,6 +1,5 @@
 'use client';
 
-import { updateProduct } from '@/app/admin/actions';
 import { ProductForm } from '@/features/admin/components/ProductForm';
 import { Button } from '@/shared/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -12,9 +11,6 @@ interface EditProductClientProps {
 }
 
 export function EditProductClient({ product }: EditProductClientProps) {
-  const handleSubmit = async (formData: FormData) =>
-    updateProduct(product.numericId, formData);
-
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-3 mb-8">
@@ -30,6 +26,8 @@ export function EditProductClient({ product }: EditProductClientProps) {
       </div>
 
       <ProductForm
+        productId={product.id}
+        productNumericId={product.numericId}
         defaultValues={{
           marca: product.name,
           cor: product.color,
@@ -38,8 +36,7 @@ export function EditProductClient({ product }: EditProductClientProps) {
           category: product.category as any,
           size: product.size as any,
         }}
-        existingImages={product.images}
-        onSubmitAction={handleSubmit}
+        existingImages={product.imageDetails ?? []}
         submitLabel="Salvar Alterações"
         submittingLabel="Salvando..."
       />

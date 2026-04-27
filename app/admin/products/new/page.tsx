@@ -1,6 +1,5 @@
 ﻿'use client';
 
-import { createProduct } from '@/app/admin/actions';
 import { ProductForm } from '@/features/admin/components/ProductForm';
 import { Button } from '@/shared/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -22,7 +21,6 @@ export default function NewProductPage() {
       </div>
 
       <ProductForm
-        onSubmitAction={createProduct}
         submitLabel="Cadastrar Produto"
         submittingLabel="Cadastrando..."
       />

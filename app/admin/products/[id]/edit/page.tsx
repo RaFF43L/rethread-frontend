@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import { productsService } from '@/features/products/services/products.service';
-import { updateProduct } from '@/app/admin/actions';
 import { EditProductClient } from './client';
 
 interface PageProps {

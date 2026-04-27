@@ -21,14 +21,15 @@ export class ProductsService {
 
   private adaptProduct(backend: ProductBackend): Product {
     let images: string[] = [];
+    let imageDetails: { id: number; url: string }[] | undefined;
     let videos: string[] = [];
 
-    if (backend.imageUrls && backend.imageUrls.length > 0) {
+    if (backend.images && backend.images.length > 0) {
+      const sorted = [...backend.images].sort((a, b) => a.id - b.id);
+      images = sorted.map(img => getImageUrl(img.urlS3, '/placeholder-product.svg'));
+      imageDetails = sorted.map(img => ({ id: img.id, url: getImageUrl(img.urlS3, '/placeholder-product.svg') }));
+    } else if (backend.imageUrls && backend.imageUrls.length > 0) {
       images = backend.imageUrls;
-    } else if (backend.images && backend.images.length > 0) {
-      images = [...backend.images]
-        .sort((a, b) => a.id - b.id)
-        .map(img => getImageUrl(img.urlS3, '/placeholder-product.svg'));
     } else if (backend.imageUrl) {
       images = [backend.imageUrl];
     } else if (backend.urlS3) {
@@ -44,11 +45,12 @@ export class ProductsService {
     return {
       id: backend.codigoIdentificacao,
       numericId: backend.id,
-      name: backend.marca || 'Produto',
+      name: backend.marca || '',
       description: backend.descricao,
       price: parseFloat(backend.preco),
       color: backend.cor,
       images,
+      imageDetails,
       videos,
       category: backend.category,
       size: backend.size,

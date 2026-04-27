@@ -106,18 +106,27 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
   return { success: true };
 }
 
-export async function updateProduct(id: number, formData: FormData): Promise<ActionResult> {
+export async function updateProduct(
+  id: number,
+  data: { marca: string; cor: string; descricao: string; preco: string; category: string; size: string }
+): Promise<ActionResult> {
   const token = await getToken();
   if (!token) redirect('/login');
+
+  const fd = new FormData();
+  fd.append('marca', data.marca);
+  fd.append('cor', data.cor);
+  fd.append('descricao', data.descricao);
+  fd.append('preco', data.preco);
+  fd.append('category', data.category);
+  fd.append('size', data.size);
 
   let res: Response;
   try {
     res = await fetch(`${env.apiUrl}/products/${id}`, {
       method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd,
     });
   } catch (e) {
     const detail = e instanceof Error ? e.message : 'desconhecido';

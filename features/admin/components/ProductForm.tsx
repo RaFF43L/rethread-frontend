@@ -21,7 +21,6 @@ import { Upload, X, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'luci
 import Link from 'next/link';
 import Image from 'next/image';
 import { compressImage } from '@/shared/utils/compress-image';
-import type { ActionResult } from '@/app/admin/actions';
 import { getPresignedUrl, uploadToS3, registerProductImage } from '@/features/products/services/s3-upload';
 import { registerProductVideo } from '@/features/products/services/register-video';
 import { productsService } from '@/features/products/services/products.service';
@@ -42,22 +41,24 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 type MediaItem =
-  | { kind: 'existing'; url: string; src: string }
+  | { kind: 'existing'; imageId: number; url: string; src: string }
   | { kind: 'new'; file: File; src: string };
 
 export interface ProductFormProps {
+  productId?: string;
+  productNumericId?: number;
   defaultValues?: Partial<FormValues>;
-  existingImages?: string[];
-  onSubmitAction: (formData: FormData) => Promise<ActionResult>;
+  existingImages?: { id: number; url: string }[];
   submitLabel: string;
   submittingLabel: string;
   redirectTo?: string;
 }
 
 export function ProductForm({
+  productId,
+  productNumericId,
   defaultValues,
   existingImages = [],
-  onSubmitAction,
   submitLabel,
   submittingLabel,
   redirectTo = '/admin/products',
@@ -66,7 +67,7 @@ export function ProductForm({
   const router = useRouter();
 
   const [mediaItems, setMediaItems] = useState<MediaItem[]>(
-    existingImages.map(url => ({ kind: 'existing', url, src: url }))
+    existingImages.map(img => ({ kind: 'existing', imageId: img.id, url: img.url, src: img.url }))
   );
   const [videoFiles, setVideoFiles] = useState<File[]>([]);
   const [videoPreviews, setVideoPreviews] = useState<string[]>([]);
@@ -83,9 +84,14 @@ export function ProductForm({
   });
 
   const selectedCategory = watch('category');
+  const isMounted = useRef(false);
 
-  // Reset size when switching to/from calça to avoid stale enum values
+  // Reset size only when the user actively changes category, not on initial mount
   useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
     setValue('size', '' as any);
   }, [selectedCategory, setValue]);
 
@@ -187,47 +193,50 @@ export function ProductForm({
           marca: values.marca || '',
           cor: values.cor,
           descricao: values.descricao,
-          preco: String(values.preco),
+          preco: values.preco,
           category: values.category,
           size: values.size,
         };
 
-        const createdProduct = await productsService.createProduct(
-          productPayload as any,
-          token || ''
-        );
-        const productId = createdProduct.id;
+        let resolvedProductId: string;
+        if (productNumericId !== undefined && productId) {
+          await apiClient.withAuth(token || '').put(`/products/${productNumericId}`, productPayload);
+          resolvedProductId = productId;
+
+          const keptImageIds = new Set(
+            mediaItems
+              .filter((m): m is Extract<MediaItem, { kind: 'existing' }> => m.kind === 'existing')
+              .map(m => m.imageId)
+          );
+          const removedImageIds = existingImages
+            .map(img => img.id)
+            .filter(id => !keptImageIds.has(id));
+          for (const imageId of removedImageIds) {
+            await apiClient.withAuth(token || '').delete(`/products/images/${imageId}`);
+          }
+        } else {
+          const created = await productsService.createProduct(productPayload as any, token || '');
+          resolvedProductId = created.id;
+        }
 
         for (const item of mediaItems) {
           if (item.kind === 'new') {
-            const { url, key } = await getPresignedUrl(
-              productId,
-              item.file.name,
-              item.file.type,
-              token
-            );
+            const { url, key } = await getPresignedUrl(resolvedProductId, item.file.name, item.file.type, token);
             await uploadToS3(url, item.file);
-            await registerProductImage(productId, key, token);
+            await registerProductImage(resolvedProductId, key, token);
           }
         }
 
         for (const file of videoFiles) {
-          const { url, key } = await getPresignedUrl(productId, file.name, file.type, token);
+          const { url, key } = await getPresignedUrl(resolvedProductId, file.name, file.type, token);
           await uploadToS3(url, file);
-          await registerProductVideo(productId, key, token);
-        }
-
-        const remainingUrls = mediaItems
-          .filter((m): m is Extract<MediaItem, { kind: 'existing' }> => m.kind === 'existing')
-          .map(m => m.url);
-        const removedUrls = existingImages.filter(url => !remainingUrls.includes(url));
-        if (removedUrls.length > 0) {
-          await apiClient.post(`/products/${productId}/remove-images`, { images: removedUrls });
+          await registerProductVideo(resolvedProductId, key, token);
         }
 
         router.push(redirectTo);
       } catch (err: any) {
-        setServerError(err?.message || 'Erro ao criar produto');
+        const msg = Array.isArray(err?.message) ? err.message.join(', ') : (err?.message || 'Erro ao salvar produto');
+        setServerError(msg);
       }
     });
   };
