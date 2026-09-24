@@ -28,6 +28,18 @@ export interface CategoryGroup {
   products: ProductBackend[];
 }
 
+export type ProductCondition =
+  | 'new_with_tag'
+  | 'excellent'
+  | 'very_good'
+  | 'visible_marks';
+
+export interface ProductMeasurement {
+  label: string;
+  valueCm: number;
+  standardRangeCm?: [number, number];
+}
+
 export interface Product {
   id: string;
   numericId: number;
@@ -43,6 +55,16 @@ export interface Product {
   available: boolean;
   createdAt: string;
   updatedAt: string;
+  // Campos opcionais para o redesign editorial — ausentes hoje na API,
+  // a UI degrada graciosamente (esconde o que não vier preenchido)
+  // até que o backend passe a enviá-los (ver BACKEND_SPEC.md).
+  condition?: ProductCondition;
+  era?: string;
+  style?: string[];
+  fit?: string;
+  material?: string;
+  measurements?: ProductMeasurement[];
+  curationNote?: string;
 }
 
 export interface BackendPaginatedResponse<T> {

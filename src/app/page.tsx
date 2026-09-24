@@ -1,108 +1,87 @@
-﻿import { Suspense } from "react";
+import { Suspense } from "react";
 import { productsService } from "@/features/products/services/products.service";
+import { ProductBackend } from "@/shared/types";
 import { ProductsList } from "@/features/products/components/ProductsList";
 import { Pagination } from "@/shared/components/Pagination";
-import { CategoryCarousel } from "@/features/products/components/CategoryCarousel";
 import { SiteHeader } from "@/features/products/components/SiteHeader";
 import { WhatsAppFloat } from "@/features/products/components/WhatsAppFloat";
-import Link from "next/link";
 import { env } from "@/shared/lib/env";
-import { getImageUrl } from "@/shared/lib/env";
-import { ProductBackend } from "@/shared/types";
+import { EmptyState } from "@/shared/components/EmptyState";
+import { RecentlyViewedSection } from "@/shared/components/RecentlyViewedSection";
+import { AnnouncementBar } from "@/shared/components/AnnouncementBar";
+import { HeroSection } from "@/features/products/components/HeroSection";
+import { TrustBadges } from "@/shared/components/TrustBadges";
+import { EditorialFooter } from "@/shared/components/EditorialFooter";
+
+const ITEMS_PER_PAGE = 20;
 
 interface PageProps {
   searchParams: Promise<{
-    page?: string;
-    limit?: string;
-    q?: string;
     categoria?: string;
     tamanho?: string;
+    q?: string;
+    page?: string;
   }>;
-}
-
-const CATEGORY_LABELS: Record<string, string> = {
-  calca: "Calças",
-  blusa: "Blusas",
-  camiseta: "Camisetas",
-  short: "Shorts",
-  vestido: "Vestidos",
-};
-
-function extractImage(product: ProductBackend): string {
-  if (product.imageUrls && product.imageUrls.length > 0)
-    return product.imageUrls[0];
-  if (product.images && product.images.length > 0)
-    return getImageUrl(product.images[0].urlS3);
-  if (product.imageUrl) return product.imageUrl;
-  if (product.urlS3) return getImageUrl(product.urlS3);
-  return "/placeholder-product.svg";
 }
 
 async function ProductsSection({ searchParams }: PageProps) {
   const params = await searchParams;
-  const page = Number(params.page) || 1;
-  const limit = Number(params.limit) || 12;
-  const query = params.q;
-  const categoria = params.categoria;
-  const tamanho = params.tamanho;
+  let products: ProductBackend[] = [];
 
-  let products;
-  let pagination;
-
-  if (tamanho) {
-    ({ data: products, pagination } = await productsService.getProductsFiltered(
-      { size: tamanho, page, limit },
-    ));
-  } else if (categoria) {
-    ({ data: products, pagination } =
-      await productsService.getProductsByCategory(categoria, { page, limit }));
-  } else {
-    ({ data: products, pagination } = await productsService.getProducts({
-      page,
-      limit,
-    }));
+  try {
+    const response = await productsService.getProducts();
+    products = response.data;
+  } catch (error) {
+    console.error("Failed to fetch products:", error);
   }
 
+  // Client-side filtering
   let filteredProducts = products;
-  if (query) {
-    const searchTerm = query.toLowerCase();
-    filteredProducts = products.filter(
+
+  if (params.q) {
+    const q = params.q.toLowerCase();
+    filteredProducts = filteredProducts.filter(
       (p) =>
-        p.name.toLowerCase().includes(searchTerm) ||
-        p.description?.toLowerCase().includes(searchTerm) ||
-        p.color.toLowerCase().includes(searchTerm),
+        p.name?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        p.category?.toLowerCase().includes(q) ||
+        p.style?.some((s) => s.toLowerCase().includes(q)) ||
+        p.material?.toLowerCase().includes(q)
     );
   }
 
-  const title = tamanho
-    ? `Tamanho ${tamanho}`
-    : categoria
-      ? CATEGORY_LABELS[categoria] || categoria
-      : query
-        ? `"${query}"`
-        : "Destaques";
+  if (params.categoria) {
+    filteredProducts = filteredProducts.filter(
+      (p) => p.category === params.categoria
+    );
+  }
+
+  if (params.tamanho) {
+    filteredProducts = filteredProducts.filter(
+      (p) => p.size === params.tamanho
+    );
+  }
+
+  const currentPage = Number(params.page || 1);
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <>
-      <h2
-        className="text-2xl md:text-3xl font-bold text-center mb-8"
-        style={{ fontFamily: "var(--font-playfair, Georgia, serif)" }}
-      >
-        {title}
-      </h2>
-
       {filteredProducts.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-muted-foreground">Nenhuma peça encontrada</p>
-        </div>
+        <EmptyState
+          title="Nenhuma peça encontrada"
+          description="Tente ajustar seus filtros ou remova alguns para ver mais resultados."
+        />
       ) : (
         <>
-          <ProductsList products={filteredProducts} />
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            basePath="/"
-          />
+          <ProductsList products={paginatedProducts} />
+          {totalPages > 1 && (
+            <Pagination currentPage={currentPage} totalPages={totalPages} />
+          )}
         </>
       )}
     </>
@@ -113,91 +92,76 @@ export default async function HomePage({ searchParams }: PageProps) {
   const params = await searchParams;
 
   let categoryItems: { category: string; count: number; image: string }[] = [];
+  let totalProducts = 0;
+  
   try {
     const categories = await productsService.getCategories();
     categoryItems = categories.map((c) => ({
       category: c.category,
       count: c.products.length,
-      image:
-        c.products.length > 0
-          ? extractImage(c.products[0])
-          : "/placeholder-product.svg",
+      image: c.products.length > 0 ? c.products[0].images[0] || "/placeholder-product.svg" : "/placeholder-product.svg",
     }));
+    totalProducts = categories.reduce((sum, c) => sum + c.products.length, 0);
   } catch {
-    // silent failure if categories endpoint is unavailable
+    // silent failure
   }
 
+  const hasFilters = !!(params.categoria || params.tamanho || params.q);
+
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* Announcement Bar */}
+      <AnnouncementBar />
+
+      {/* Header */}
       <SiteHeader
         categories={categoryItems}
         selectedCategory={params.categoria}
         selectedSize={params.tamanho}
       />
 
-      {/* Hero — Logo como protagonista */}
-      <section className="py-12 md:py-20 text-center">
-        <Link href="/" className="inline-block">
-          <h1 className="sr-only">Segunda Aura</h1>
-          <img
-            src="/logo-segunda-aura.png"
-            alt="Segunda Aura"
-            className="w-64 md:w-80 h-auto mx-auto"
-          />
-        </Link>
-      </section>
-
-      {/* Categorias — cards com imagem */}
-      {categoryItems.length > 0 && (
-        <section className="px-5 pb-16">
-          <h2
-            className="text-2xl md:text-3xl font-bold text-center mb-8"
-            style={{ fontFamily: "var(--font-playfair, Georgia, serif)" }}
-          >
-            Categorias
-          </h2>
-          <CategoryCarousel
-            categories={categoryItems}
-            selectedCategory={params.categoria}
-          />
-        </section>
-      )}
+      {/* Hero Section - Apenas na home sem filtros */}
+      {!hasFilters && <HeroSection totalProducts={totalProducts} />}
 
       {/* Produtos */}
-      <section className="px-5 pb-16 flex-1">
-        <Suspense
-          fallback={
-            <div className="flex justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-foreground border-t-transparent" />
+      <section id="produtos" className="w-full py-12 md:py-20 px-4 md:px-14 bg-neutral-100">
+        <div className="max-w-[1360px] mx-auto">
+          {/* Section Header */}
+          {!hasFilters && (
+            <div className="flex items-end justify-between mb-10 md:mb-12">
+              <div>
+                <p className="text-[10px] md:text-[11px] font-medium tracking-[0.22em] uppercase text-neutral-600 mb-2 md:mb-3">
+                  Explore o catálogo
+                </p>
+                <h2 className="font-serif text-[32px] md:text-[40px] font-bold italic text-neutral-950">
+                  Peças em destaque
+                </h2>
+              </div>
             </div>
-          }
-        >
-          <ProductsSection searchParams={searchParams} />
-        </Suspense>
+          )}
+
+          <Suspense
+            fallback={
+              <div className="flex justify-center py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-coral border-t-transparent" />
+              </div>
+            }
+          >
+            <ProductsSection searchParams={searchParams} />
+          </Suspense>
+        </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-white py-10">
-        <div className="text-center px-5">
-          <p
-            className="text-lg font-semibold text-foreground mb-1"
-            style={{
-              fontFamily: "var(--font-playfair, Georgia, serif)",
-              fontStyle: "italic",
-            }}
-          >
-            Segunda Aura
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Sustentabilidade e estilo em cada peça
-          </p>
-          <p className="text-[11px] text-muted-foreground/60 mt-4">
-            &copy; {new Date().getFullYear()} Segunda Aura Brechó
-          </p>
-        </div>
-      </footer>
+      {/* Trust Badges - Apenas na home sem filtros */}
+      {!hasFilters && <TrustBadges />}
 
-      {/* WhatsApp flutuante */}
+      {/* Recently Viewed */}
+      <RecentlyViewedSection />
+
+      {/* Footer Editorial */}
+      <EditorialFooter />
+
+      {/* WhatsApp Float */}
       <WhatsAppFloat number={env.whatsappNumber} />
     </div>
   );

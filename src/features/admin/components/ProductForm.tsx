@@ -222,9 +222,11 @@ export function ProductForm({
 
     startTransition(async () => {
       try {
+        const cookieName =
+          process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || "segunda_aura_token";
         const token = document.cookie
           .split("; ")
-          .find((row) => row.startsWith("rethread_admin_token="))
+          .find((row) => row.startsWith(`${cookieName}=`))
           ?.split("=")[1];
 
         const productPayload = {

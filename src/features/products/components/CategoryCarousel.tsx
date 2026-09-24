@@ -1,10 +1,11 @@
-﻿"use client";
+"use client";
 
 import { useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ProductImage } from "@/shared/components/ProductImage";
+import { cn } from "@/shared/lib/utils";
 
 const CATEGORY_LABELS: Record<string, string> = {
   calca: "Calças",
@@ -51,25 +52,29 @@ export function CategoryCarousel({
     src === "/placeholder-product.svg" || src === "/placeholder-product.png";
 
   return (
-    <div>
+    <div className="space-y-3">
       <div
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+        className="flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide"
       >
         {categories.map((cat) => (
           <button
             key={cat.category}
             type="button"
             onClick={() => navigate(cat.category)}
-            className="relative flex-shrink-0 w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)] aspect-[3/4] rounded-lg overflow-hidden group snap-start"
+            className={cn(
+              "relative flex-shrink-0 w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden group snap-start",
+              "transition-all duration-300 hover:scale-105",
+              selectedCategory === cat.category && "ring-2 ring-foreground ring-offset-2 ring-offset-background"
+            )}
           >
             <div className="absolute inset-0">
               {isPlaceholder(cat.image) ? (
-                <div className="w-full h-full bg-white flex items-center justify-center">
+                <div className="w-full h-full bg-muted flex items-center justify-center">
                   <img
                     src="/logo-segunda-aura.png"
                     alt="Segunda Aura"
-                    className="w-4/5 h-auto"
+                    className="w-3/5 h-auto opacity-40"
                   />
                 </div>
               ) : (
@@ -79,34 +84,13 @@ export function CategoryCarousel({
                 />
               )}
             </div>
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
-            <span className="absolute bottom-4 left-4 text-white text-sm font-medium tracking-wide drop-shadow">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/70 transition-all duration-300" />
+            <span className="absolute bottom-2 left-2 right-2 text-white text-[10px] font-medium tracking-wider drop-shadow-lg text-center">
               {CATEGORY_LABELS[cat.category] || cat.category}
             </span>
           </button>
         ))}
       </div>
-
-      {categories.length > 2 && (
-        <div className="flex justify-center gap-8 mt-6">
-          <button
-            type="button"
-            onClick={() => scroll("left")}
-            aria-label="Anterior"
-            className="text-foreground/40 hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => scroll("right")}
-            aria-label="Próximo"
-            className="text-foreground/40 hover:text-foreground transition-colors"
-          >
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
-      )}
     </div>
   );
 }
