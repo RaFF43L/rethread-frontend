@@ -183,8 +183,7 @@ export function ProductCard({
             {product.condition === 'new_with_tag' && 'Nova com etiqueta'}
             {product.condition === 'excellent' && 'Excelente estado'}
             {product.condition === 'very_good' && 'Muito bom estado'}
-            {product.condition === 'good' && 'Bom estado'}
-            {product.condition === 'fair' && 'Estado aceitável'}
+            {product.condition === 'visible_marks' && 'Marcas visíveis'}
           </p>
         )}
         <div className="flex items-baseline gap-2 pt-0.5">

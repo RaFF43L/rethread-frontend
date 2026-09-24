@@ -99,7 +99,9 @@ export default async function HomePage({ searchParams }: PageProps) {
     categoryItems = categories.map((c) => ({
       category: c.category,
       count: c.products.length,
-      image: c.products.length > 0 ? c.products[0].images[0] || "/placeholder-product.svg" : "/placeholder-product.svg",
+      image: c.products.length > 0 && c.products[0].images && c.products[0].images[0]
+        ? (typeof c.products[0].images[0] === 'string' ? c.products[0].images[0] : c.products[0].images[0].urlS3)
+        : "/placeholder-product.svg",
     }));
     totalProducts = categories.reduce((sum, c) => sum + c.products.length, 0);
   } catch {

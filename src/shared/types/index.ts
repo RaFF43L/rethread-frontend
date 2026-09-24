@@ -58,6 +58,7 @@ export interface Product {
   // Campos opcionais para o redesign editorial — ausentes hoje na API,
   // a UI degrada graciosamente (esconde o que não vier preenchido)
   // até que o backend passe a enviá-los (ver BACKEND_SPEC.md).
+  brand?: string;
   condition?: ProductCondition;
   era?: string;
   style?: string[];
