@@ -40,8 +40,8 @@ rethread-frontend/
 │   ├── lib/                      # Configurações (API client, etc)
 │   ├── types/                    # Tipos TypeScript globais
 │   └── utils/                    # Funções utilitárias
-└── middleware.ts                 # Middleware de autenticação
-
+├── proxy.ts                      # Middleware/proxy de autenticação
+└── AI/                           # Documentação para agentes de IA
 ```
 
 ## ⚙️ Configuração

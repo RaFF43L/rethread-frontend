@@ -1,0 +1,45 @@
+"use client";
+
+import { ProductForm } from "@/features/admin/components/ProductForm";
+import { Button } from "@/shared/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import type { Product } from "@/shared/types";
+
+interface EditProductClientProps {
+  product: Product;
+}
+
+export function EditProductClient({ product }: EditProductClientProps) {
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="flex items-center gap-3 mb-8">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/admin/products">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold">Editar Produto</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">{product.name}</p>
+        </div>
+      </div>
+
+      <ProductForm
+        productId={product.id}
+        productNumericId={product.numericId}
+        defaultValues={{
+          marca: product.name,
+          cor: product.color,
+          descricao: product.description,
+          preco: product.price,
+          category: product.category as any,
+          size: product.size as any,
+        }}
+        existingImages={product.imageDetails ?? []}
+        submitLabel="Salvar Alterações"
+        submittingLabel="Salvando..."
+      />
+    </div>
+  );
+}
