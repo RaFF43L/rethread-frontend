@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { productsService } from "@/features/products/services/products.service";
-import { ProductBackend } from "@/shared/types";
+import { Product } from "@/shared/types";
 import { ProductsList } from "@/features/products/components/ProductsList";
 import { Pagination } from "@/shared/components/Pagination";
 import { SiteHeader } from "@/features/products/components/SiteHeader";
@@ -26,7 +26,7 @@ interface PageProps {
 
 async function ProductsSection({ searchParams }: PageProps) {
   const params = await searchParams;
-  let products: ProductBackend[] = [];
+  let products: Product[] = [];
 
   try {
     const response = await productsService.getProducts();
