@@ -80,7 +80,7 @@ async function ProductsSection({ searchParams }: PageProps) {
         <>
           <ProductsList products={paginatedProducts} />
           {totalPages > 1 && (
-            <Pagination currentPage={currentPage} totalPages={totalPages} />
+            <Pagination currentPage={currentPage} totalPages={totalPages} basePath="/" />
           )}
         </>
       )}
