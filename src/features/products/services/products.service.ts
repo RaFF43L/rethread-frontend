@@ -17,6 +17,36 @@ export interface GetProductsFilterParams {
   limit?: number;
 }
 
+export interface PresignedUrlEntry {
+  key: string;
+  url: string;
+}
+
+export interface ProductMediaInput {
+  fileName: string;
+  fileType: string;
+}
+
+export interface CreateProductInput {
+  marca: string;
+  cor: string;
+  descricao: string;
+  preco: number;
+  category: string;
+  size: string;
+  media?: ProductMediaInput[];
+}
+
+export interface CreateProductResponse {
+  product: Product;
+  presignedUrls?: PresignedUrlEntry[];
+}
+
+interface CreateProductBackendResponse {
+  product: ProductBackend;
+  presignedUrls?: PresignedUrlEntry[];
+}
+
 export class ProductsService {
 
   private adaptProduct(backend: ProductBackend): Product {
@@ -151,9 +181,12 @@ export class ProductsService {
     return this.adaptProduct(response);
   }
 
-  async createProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>, token: string): Promise<Product> {
-    const response = await apiClient.withAuth(token).post<ProductBackend>('/products', product);
-    return this.adaptProduct(response);
+  async createProduct(product: CreateProductInput, token: string): Promise<CreateProductResponse> {
+    const response = await apiClient.withAuth(token).post<CreateProductBackendResponse>('/products', product);
+    return {
+      product: this.adaptProduct(response.product),
+      presignedUrls: response.presignedUrls,
+    };
   }
 
   async updateProduct(id: string, product: Partial<Product>, token: string): Promise<Product> {

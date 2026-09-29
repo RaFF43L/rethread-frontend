@@ -238,12 +238,24 @@ export function ProductForm({
           size: values.size,
         };
 
-        let resolvedProductId: string;
+        const newImageItems = mediaItems.filter(
+          (m): m is Extract<MediaItem, { kind: "new" }> => m.kind === "new",
+        );
+        // Ordem dos uploads: imagens novas primeiro, depois vídeos
+        const uploadFiles: File[] = [
+          ...newImageItems.map((item) => item.file),
+          ...videoFiles,
+        ];
+
+        const registerMedia = (productId: string, key: string, file: File) =>
+          file.type.startsWith("video/")
+            ? registerProductVideo(productId, key, token)
+            : registerProductImage(productId, key, token);
+
         if (productNumericId !== undefined && productId) {
           await apiClient
             .withAuth(token || "")
             .put(`/products/${productNumericId}`, productPayload);
-          resolvedProductId = productId;
 
           const keptImageIds = new Set(
             mediaItems
@@ -261,36 +273,42 @@ export function ProductForm({
               .withAuth(token || "")
               .delete(`/products/images/${imageId}`);
           }
-        } else {
-          const created = await productsService.createProduct(
-            productPayload as any,
-            token || "",
-          );
-          resolvedProductId = created.id;
-        }
 
-        for (const item of mediaItems) {
-          if (item.kind === "new") {
+          for (const file of uploadFiles) {
             const { url, key } = await getPresignedUrl(
-              resolvedProductId,
-              item.file.name,
-              item.file.type,
+              productId,
+              file.name,
+              file.type,
               token,
             );
-            await uploadToS3(url, item.file);
-            await registerProductImage(resolvedProductId, key, token);
+            await uploadToS3(url, file);
+            await registerMedia(productId, key, file);
           }
-        }
-
-        for (const file of videoFiles) {
-          const { url, key } = await getPresignedUrl(
-            resolvedProductId,
-            file.name,
-            file.type,
-            token,
+        } else {
+          // Criação: o backend gera todas as URLs pré-assinadas na própria
+          // resposta, na mesma ordem do array `media` enviado.
+          const created = await productsService.createProduct(
+            {
+              ...productPayload,
+              media: uploadFiles.map((file) => ({
+                fileName: file.name,
+                fileType: file.type,
+              })),
+            },
+            token || "",
           );
-          await uploadToS3(url, file);
-          await registerProductVideo(resolvedProductId, key, token);
+          const presignedUrls = created.presignedUrls ?? [];
+          if (presignedUrls.length < uploadFiles.length) {
+            throw new Error(
+              "Backend não retornou URLs de upload para todas as mídias",
+            );
+          }
+
+          for (const [index, file] of uploadFiles.entries()) {
+            const { url, key } = presignedUrls[index];
+            await uploadToS3(url, file);
+            await registerMedia(created.product.id, key, file);
+          }
         }
 
         router.push(redirectTo);
