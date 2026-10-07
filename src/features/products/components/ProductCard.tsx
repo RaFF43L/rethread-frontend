@@ -7,6 +7,7 @@ import {
   getWhatsAppMessageText,
 } from "@/shared/utils/format";
 import { ProductImage } from "@/shared/components/ProductImage";
+import { FavoriteButton } from "@/shared/components/FavoriteButton";
 import { cn } from "@/shared/lib/utils";
 import { env } from "@/shared/lib/env";
 
@@ -40,6 +41,11 @@ export function ProductCard({
             Vendido
           </span>
         )}
+        <FavoriteButton
+          product={product}
+          size="sm"
+          className="absolute right-2 top-2 z-20"
+        />
       </Link>
 
       {/* Text block */}

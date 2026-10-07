@@ -9,9 +9,9 @@ interface ProductMeasurementsProps {
 }
 
 /**
- * Bloco de caimento & medidas: mostra a medida real da peça (cm) e,
- * quando existir uma faixa padrão de mercado para aquele quesito,
- * posiciona a peça dentro dessa faixa para dar noção intuitiva de caimento.
+ * Fit & measurements block: shows the garment's real measurement (cm) and,
+ * when a standard market range exists for that attribute,
+ * positions the garment within that range to give an intuitive sense of fit.
  */
 export function ProductMeasurements({
   measurements,

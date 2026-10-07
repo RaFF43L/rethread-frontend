@@ -29,7 +29,7 @@ const STEPS: { key: ProductCondition; label: string; description: string }[] = [
 interface ProductConditionScaleProps {
   condition?: ProductCondition;
   className?: string;
-  /** Renderiza apenas o selo compacto (para uso em cards de listagem) */
+  /** Renders only the compact badge (for use in listing cards) */
   compact?: boolean;
 }
 

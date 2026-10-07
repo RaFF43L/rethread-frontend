@@ -1,4 +1,4 @@
-// Utilitário para registrar vídeo de produto
+// Utility to register a product video
 import { apiClient } from '@/shared/lib/api-client';
 
 export async function registerProductVideo(

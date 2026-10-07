@@ -24,9 +24,9 @@ export function getWhatsAppMessageText(product: { name: string; price: number; s
 }
 
 /**
- * Mensagem de interesse da página de detalhe da peça.
- * Usa apenas dados existentes; campos ausentes são omitidos da frase.
- * Ex.: "Olá! Tenho interesse nesta peça: Vestido (tamanho M, Azul) - R$ 120,00. https://..."
+ * Interest message for the product detail page.
+ * Uses only existing data; missing fields are omitted from the sentence.
+ * E.g.: "Olá! Tenho interesse nesta peça: Vestido (tamanho M, Azul) - R$ 120,00. https://..."
  */
 export function getProductInquiryMessage(
   product: { name: string; price: number; size?: string; color?: string },

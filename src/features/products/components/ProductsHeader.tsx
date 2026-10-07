@@ -39,7 +39,7 @@ export function ProductsHeader({
 
   return (
     <div className="space-y-6 mb-8">
-      {/* Título e contador */}
+      {/* Title and counter */}
       <div className="text-center">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-2">
           Nossa Coleção
@@ -61,10 +61,10 @@ export function ProductsHeader({
         </p>
       </div>
 
-      {/* Barra de pesquisa */}
+      {/* Search bar */}
       <SearchBar />
 
-      {/* Filtros */}
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground whitespace-nowrap">

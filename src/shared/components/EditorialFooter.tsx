@@ -4,14 +4,14 @@ import Link from "next/link";
 import { Instagram, Facebook, Mail } from "lucide-react";
 
 const footerLinks = {
-  comprar: [
+  shop: [
     { label: "Todas as Peças", href: "/" },
-    { label: "Calças", href: "/?categoria=calca" },
-    { label: "Blusas", href: "/?categoria=blusa" },
-    { label: "Vestidos", href: "/?categoria=vestido" },
-    { label: "Shorts", href: "/?categoria=short" },
+    { label: "Calças", href: "/?category=calca" },
+    { label: "Blusas", href: "/?category=blusa" },
+    { label: "Vestidos", href: "/?category=vestido" },
+    { label: "Shorts", href: "/?category=short" },
   ],
-  sobre: [
+  about: [
     { label: "Nossa História", href: "/#about" },
     { label: "Como Funciona", href: "/#about" },
     { label: "Sustentabilidade", href: "/#about" },
@@ -80,7 +80,7 @@ export function EditorialFooter() {
               Comprar
             </h4>
             <ul className="space-y-2.5 md:space-y-3">
-              {footerLinks.comprar.map((link) => (
+              {footerLinks.shop.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -99,7 +99,7 @@ export function EditorialFooter() {
               Sobre
             </h4>
             <ul className="space-y-2.5 md:space-y-3">
-              {footerLinks.sobre.map((link) => (
+              {footerLinks.about.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}

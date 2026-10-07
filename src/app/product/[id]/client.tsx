@@ -133,7 +133,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                 <Share2 className="h-5 w-5" />
               </button>
             )}
-            <FavoriteButton productId={product.id} size="md" />
+            <FavoriteButton product={product} size="md" />
           </div>
         </div>
       </header>

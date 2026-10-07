@@ -27,7 +27,7 @@ export function Pagination({
 
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
-    const showPages = 5; // Quantas páginas mostrar
+    const showPages = 5; // How many pages to show
 
     if (totalPages <= showPages) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);

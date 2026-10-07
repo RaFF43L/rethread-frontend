@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
 
-// Tela amigável exibida quando quem acessa /admin não tem a sessão Google com
-// o grupo @admin (não logado ou sem permissão). Só tokens do tema.
+// Friendly screen shown when whoever accesses /admin lacks the Google session with
+// the @admin group (not logged in or without permission). Theme tokens only.
 export function AdminAccessDenied() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-5">

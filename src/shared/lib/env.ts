@@ -14,8 +14,8 @@ export const env = {
 } as const;
 
 /**
- * Valida se todas as variáveis obrigatórias estão definidas
- * Chame esta função no início da aplicação
+ * Validates that all required variables are defined.
+ * Call this function at application startup.
  */
 export function validateEnv() {
   if (!env.isProduction) {
@@ -40,7 +40,7 @@ export function validateEnv() {
 }
 
 /**
- * Helper para construir URLs de API
+ * Helper to build API URLs.
  */
 export function getApiUrl(path: string): string {
   const baseUrl = env.apiUrl.endsWith('/') 
@@ -53,7 +53,7 @@ export function getApiUrl(path: string): string {
 }
 
 /**
- * Helper para verificar se uma URL é uma imagem S3
+ * Helper to check whether a URL is an S3 image.
  */
 export function isS3Image(url: string): boolean {
   return url.includes('s3.') || 
@@ -62,7 +62,7 @@ export function isS3Image(url: string): boolean {
 }
 
 /**
- * Helper para obter URL de imagem otimizada
+ * Helper to get an optimized image URL.
  */
 export function getImageUrl(imageUrl?: string, fallback?: string): string {
   if (!imageUrl) {

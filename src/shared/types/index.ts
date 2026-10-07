@@ -55,9 +55,9 @@ export interface Product {
   available: boolean;
   createdAt: string;
   updatedAt: string;
-  // Campos opcionais para o redesign editorial — ausentes hoje na API,
-  // a UI degrada graciosamente (esconde o que não vier preenchido)
-  // até que o backend passe a enviá-los (ver BACKEND_SPEC.md).
+  // Optional fields for the editorial redesign — currently absent from the API,
+  // the UI degrades gracefully (hides whatever isn't filled in)
+  // until the backend starts sending them (see BACKEND_SPEC.md).
   brand?: string;
   condition?: ProductCondition;
   era?: string;
@@ -125,8 +125,8 @@ export interface AuthResponse {
   refreshToken?: string;
 }
 
-// Usuário autenticado via Google (campos retornados pelo backend em /auth/me).
-// Todos opcionais: a UI aplica fallback (iniciais) quando algo faltar.
+// User authenticated via Google (fields returned by the backend at /auth/me).
+// All optional: the UI applies a fallback (initials) when something is missing.
 export interface GoogleUser {
   name?: string;
   email?: string;
@@ -134,15 +134,15 @@ export interface GoogleUser {
   groups?: string[];
 }
 
-// Resposta do backend ao iniciar o login: a URL de autorização e o state.
+// Backend response when starting the login: the authorization URL and the state.
 export interface GoogleLoginInit {
   url: string;
   state: string;
 }
 
-// Resposta do POST /auth/google/callback. Os dados do usuário vêm em `user`
-// (não há /auth/me). O accessToken é usado no logout; refreshToken não é usado
-// no frontend (sem troca de token aqui).
+// Response from POST /auth/google/callback. The user data comes in `user`
+// (there is no /auth/me). The accessToken is used on logout; refreshToken is not used
+// on the frontend (no token exchange here).
 export interface GoogleCallbackResponse {
   accessToken?: string;
   idToken?: string;

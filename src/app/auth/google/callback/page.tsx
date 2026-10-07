@@ -11,7 +11,7 @@ const GENERIC_ERROR = "Não foi possível concluir o login. Tente novamente.";
 function CallbackLoading() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-6 bg-background px-5">
-      {/* Mesmo loading do resto do app (logo + spinner), adaptado ao tema. */}
+      {/* Same loading as the rest of the app (logo + spinner), adapted to the theme. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/logo-segunda-aura.png"
@@ -35,7 +35,7 @@ function CallbackContent() {
   const searchParams = useSearchParams();
   const { completeLogin } = useUserSession();
   const [error, setError] = useState<string | null>(null);
-  // Garante que o code seja enviado UMA única vez (Strict Mode em dev roda 2x).
+  // Ensures the code is sent ONLY once (Strict Mode runs twice in dev).
   const handledRef = useRef(false);
 
   useEffect(() => {
@@ -47,15 +47,15 @@ function CallbackContent() {
     const oauthError =
       searchParams.get("error") || searchParams.get("error_description");
 
-    // O provedor devolveu um erro: não chamamos o backend.
+    // The provider returned an error: we don't call the backend.
     if (oauthError) {
-      // Sincronizando estado React a partir da URL (fonte externa), só no cliente.
+      // Syncing React state from the URL (external source), client-only.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setError("O login foi cancelado ou falhou.");
       return;
     }
 
-    // Lê e já remove o state salvo, para ser de uso único.
+    // Reads and immediately removes the saved state, so it is single-use.
     const savedState =
       typeof window !== "undefined"
         ? window.sessionStorage.getItem(AUTH_STATE_KEY)
@@ -64,7 +64,7 @@ function CallbackContent() {
       window.sessionStorage.removeItem(AUTH_STATE_KEY);
     }
 
-    // State ausente ou divergente => aborta antes de qualquer chamada.
+    // Missing or mismatched state => abort before any call.
     if (!code || !state || !savedState || state !== savedState) {
       setError(GENERIC_ERROR);
       return;
@@ -72,7 +72,7 @@ function CallbackContent() {
 
     completeLogin(code)
       .then(() => {
-        // A URL com o code não pode permanecer no histórico.
+        // The URL with the code must not stay in the history.
         router.replace("/");
       })
       .catch(() => {

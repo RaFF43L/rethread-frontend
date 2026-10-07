@@ -1,9 +1,9 @@
-// Leitura/escrita da sessão do login Google em cookies não-HttpOnly.
+// Read/write the Google login session in non-HttpOnly cookies.
 //
-// Decisão (aprovada pelo usuário): o backend retorna tokens no corpo e NÃO há
-// /auth/me. Guardamos o accessToken (para o logout) e os dados do usuário
-// (nome/email/foto, lidos do idToken) em cookies, para o header sobreviver ao F5.
-// NÃO usar localStorage (proibido pelos critérios) e nunca logar tokens.
+// Decision (approved by the user): the backend returns tokens in the body and there is
+// NO /auth/me. We store the accessToken (for logout) and the user data
+// (name/email/photo, read from the idToken) in cookies, so the header survives an F5.
+// Do NOT use localStorage (forbidden by the criteria) and never log tokens.
 
 import { env } from '@/shared/lib/env';
 import type { GoogleUser } from '@/shared/types';
@@ -42,7 +42,7 @@ function resolveMaxAge(seconds?: number): number {
   return seconds && seconds > 0 ? seconds : DEFAULT_MAX_AGE_SECONDS;
 }
 
-// --- Token (accessToken, usado no logout) ---
+// --- Token (accessToken, used on logout) ---
 
 export function getSessionToken(): string | null {
   return readCookie(env.sessionCookieName);
@@ -52,7 +52,7 @@ export function setSessionToken(token: string, maxAgeSeconds?: number): void {
   writeCookie(env.sessionCookieName, token, resolveMaxAge(maxAgeSeconds));
 }
 
-// --- Usuário (nome/email/foto para exibição) ---
+// --- User (name/email/photo for display) ---
 
 export function getSessionUser(): GoogleUser | null {
   const raw = readCookie(USER_COOKIE);
@@ -68,7 +68,7 @@ export function setSessionUser(user: GoogleUser, maxAgeSeconds?: number): void {
   writeCookie(USER_COOKIE, JSON.stringify(user), resolveMaxAge(maxAgeSeconds));
 }
 
-// --- Limpeza completa (logout / sessão inválida) ---
+// --- Full cleanup (logout / invalid session) ---
 
 export function clearSession(): void {
   deleteCookie(env.sessionCookieName);

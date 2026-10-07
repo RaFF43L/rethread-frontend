@@ -22,7 +22,7 @@ interface ProductActionsProps {
   available: boolean;
 }
 
-type ActionType = "vender" | "reverter" | "deletar" | null;
+type ActionType = "sell" | "revert" | "delete" | null;
 
 const DIALOG_CONFIG: Record<
   NonNullable<ActionType>,
@@ -33,20 +33,20 @@ const DIALOG_CONFIG: Record<
     confirmClass: string;
   }
 > = {
-  vender: {
+  sell: {
     title: "Marcar como vendido?",
     description:
       "O produto será marcado como vendido e ficará indisponível na loja.",
     confirmLabel: "Confirmar venda",
     confirmClass: "bg-green-600 hover:bg-green-700 text-white",
   },
-  reverter: {
+  revert: {
     title: "Reverter para disponível?",
     description: "O produto voltará a aparecer como disponível na loja.",
     confirmLabel: "Reverter",
     confirmClass: "bg-blue-600 hover:bg-blue-700 text-white",
   },
-  deletar: {
+  delete: {
     title: "Deletar produto?",
     description:
       "Esta ação não pode ser desfeita. O produto será removido permanentemente.",
@@ -69,9 +69,9 @@ export function ProductActions({
     setError(null);
 
     const actionMap = {
-      vender: () => markAsSold(numericId),
-      reverter: () => revertSale(numericId),
-      deletar: () => deleteProduct(numericId),
+      sell: () => markAsSold(numericId),
+      revert: () => revertSale(numericId),
+      delete: () => deleteProduct(numericId),
     };
 
     startTransition(async () => {
@@ -105,7 +105,7 @@ export function ProductActions({
             {available ? (
               <AlertDialogTrigger asChild>
                 <button
-                  onClick={() => setPendingAction("vender")}
+                  onClick={() => setPendingAction("sell")}
                   className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 hover:bg-green-50 px-2 py-1 rounded transition-colors"
                 >
                   <ShoppingBag className="w-3.5 h-3.5" />
@@ -115,7 +115,7 @@ export function ProductActions({
             ) : (
               <AlertDialogTrigger asChild>
                 <button
-                  onClick={() => setPendingAction("reverter")}
+                  onClick={() => setPendingAction("revert")}
                   className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -126,7 +126,7 @@ export function ProductActions({
 
             <AlertDialogTrigger asChild>
               <button
-                onClick={() => setPendingAction("deletar")}
+                onClick={() => setPendingAction("delete")}
                 className="flex items-center gap-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />

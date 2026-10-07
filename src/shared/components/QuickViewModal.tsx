@@ -96,7 +96,7 @@ export function QuickViewModal({
           >
             {product.available ? "Disponível" : "Vendido"}
           </Badge>
-          <FavoriteButton productId={product.id} size="md" />
+          <FavoriteButton product={product} size="md" />
         </div>
 
         {/* Content */}

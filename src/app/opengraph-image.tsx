@@ -20,7 +20,7 @@ export default async function Image() {
           position: 'relative',
         }}
       >
-        {/* Decoração de fundo */}
+        {/* Background decoration */}
         <div
           style={{
             position: 'absolute',
@@ -30,7 +30,7 @@ export default async function Image() {
           }}
         />
 
-        {/* Borda decorativa */}
+        {/* Decorative border */}
         <div
           style={{
             position: 'absolute',
@@ -40,7 +40,7 @@ export default async function Image() {
           }}
         />
 
-        {/* Ícone / Monograma */}
+        {/* Icon / Monogram */}
         <div
           style={{
             width: '80px',
@@ -66,7 +66,7 @@ export default async function Image() {
           </span>
         </div>
 
-        {/* Nome */}
+        {/* Name */}
         <div
           style={{
             fontSize: '72px',
@@ -80,7 +80,7 @@ export default async function Image() {
           Segunda Aura
         </div>
 
-        {/* Subtítulo */}
+        {/* Subtitle */}
         <div
           style={{
             fontSize: '24px',
@@ -95,7 +95,7 @@ export default async function Image() {
           Brechó · Moda Sustentável
         </div>
 
-        {/* Linha divisória */}
+        {/* Divider line */}
         <div
           style={{
             width: '64px',
@@ -106,7 +106,7 @@ export default async function Image() {
           }}
         />
 
-        {/* Descrição */}
+        {/* Description */}
         <div
           style={{
             fontSize: '18px',

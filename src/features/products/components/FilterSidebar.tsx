@@ -129,7 +129,7 @@ export function FilterSidebar({
                 active={isSelected}
                 onClick={() =>
                   updateParam(
-                    "categoria",
+                    "category",
                     category === "" ? null : isSelected ? null : category,
                   )
                 }

@@ -167,7 +167,7 @@ export function DashboardFilters() {
         <FilterContent isPending={isPending} />
       </div>
 
-      {/* Mobile: botão + drawer */}
+      {/* Mobile: button + drawer */}
       <div className="md:hidden mb-4">
         <button
           type="button"

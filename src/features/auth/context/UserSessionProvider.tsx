@@ -23,13 +23,13 @@ type SessionStatus = "loading" | "authenticated" | "unauthenticated";
 interface UserSessionContextValue {
   user: GoogleUser | null;
   status: SessionStatus;
-  /** Mensagem discreta exibida junto ao botão quando a iniciação falha. */
+  /** Subtle message shown next to the button when initialization fails. */
   initError: string | null;
-  /** Começa o fluxo: pede a URL ao backend, guarda o state e redireciona. */
+  /** Starts the flow: requests the URL from the backend, stores the state, and redirects. */
   startLogin: () => Promise<void>;
-  /** Encerra a sessão local e no backend. */
+  /** Ends the session locally and on the backend. */
   logout: () => Promise<void>;
-  /** Usado pela página de callback: troca o code por sessão e persiste. */
+  /** Used by the callback page: exchanges the code for a session and persists it. */
   completeLogin: (code: string) => Promise<void>;
 }
 
@@ -49,10 +49,10 @@ export function UserSessionProvider({
   const [initError, setInitError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Carrega a sessão ao montar: lê os cookies (não há /auth/me para consultar).
+  // Loads the session on mount: reads the cookies (there is no /auth/me to query).
   useEffect(() => {
     const savedUser = getSessionUser();
-    // Restaura só do estado externo (cookie), disponível apenas no cliente.
+    // Restores only from external state (cookie), available only on the client.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (savedUser) setUser(savedUser);
     setStatus(savedUser ? "authenticated" : "unauthenticated");
@@ -62,7 +62,7 @@ export function UserSessionProvider({
     setInitError(null);
     try {
       const { url, state } = await googleAuthService.init();
-      // Guarda o state (uso único, validado no callback) e sai para o provedor.
+      // Stores the state (single-use, validated in the callback) and leaves to the provider.
       window.sessionStorage.setItem(AUTH_STATE_KEY, state);
       window.location.assign(url);
     } catch {
@@ -72,7 +72,7 @@ export function UserSessionProvider({
 
   const completeLogin = useCallback(async (code: string) => {
     const resp = await googleAuthService.callback(code);
-    // Dados do usuário vêm no corpo do callback (backend não tem /auth/me).
+    // User data comes in the callback body (the backend has no /auth/me).
     const nextUser: GoogleUser = {
       name: resp.user?.name,
       email: resp.user?.email,
@@ -93,7 +93,7 @@ export function UserSessionProvider({
     try {
       await googleAuthService.logout(token ?? undefined);
     } catch {
-      // Falha no backend não deve impedir o logout local.
+      // A backend failure must not prevent the local logout.
     }
     clearSession();
     setUser(null);

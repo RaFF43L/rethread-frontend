@@ -31,8 +31,8 @@ export function CategoryCarousel({
 
   const navigate = (cat: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (selectedCategory === cat) params.delete("categoria");
-    else params.set("categoria", cat);
+    if (selectedCategory === cat) params.delete("category");
+    else params.set("category", cat);
     params.set("page", "1");
     startTransition(() => router.push(`/?${params.toString()}`));
   };

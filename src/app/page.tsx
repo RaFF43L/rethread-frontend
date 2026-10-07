@@ -5,6 +5,7 @@ import { ProductsList } from "@/features/products/components/ProductsList";
 import { Pagination } from "@/shared/components/Pagination";
 import { SiteHeader } from "@/features/products/components/SiteHeader";
 import { CategoryFilters } from "@/features/products/components/CategoryFilters";
+import { FavoritesShortcut } from "@/features/products/components/FavoritesShortcut";
 import { WhatsAppFloat } from "@/features/products/components/WhatsAppFloat";
 import { env } from "@/shared/lib/env";
 import { EmptyState } from "@/shared/components/EmptyState";
@@ -13,7 +14,7 @@ const ITEMS_PER_PAGE = 20;
 
 interface PageProps {
   searchParams: Promise<{
-    categoria?: string;
+    category?: string;
     page?: string;
   }>;
 }
@@ -31,9 +32,9 @@ async function ProductsSection({ searchParams }: PageProps) {
 
   let filteredProducts = products;
 
-  if (params.categoria) {
+  if (params.category) {
     filteredProducts = filteredProducts.filter(
-      (p) => p.category === params.categoria
+      (p) => p.category === params.category
     );
   }
 
@@ -91,19 +92,22 @@ export default async function HomePage({ searchParams }: PageProps) {
       <main className="flex-1">
         <section id="produtos" className="w-full py-10 md:py-14 px-4 md:px-14">
           <div className="max-w-[1360px] mx-auto">
-            <div className="mb-5">
-              <h1 className="text-[1.5rem] md:text-[1.75rem] font-semibold leading-[1.2] tracking-[-0.02em] text-foreground">
-                Explore o catálogo
-              </h1>
-              <p className="mt-1 text-[0.9375rem] font-normal leading-[1.5] text-muted-foreground">
-                Peças únicas e autênticas.
-              </p>
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h1 className="text-[1.5rem] md:text-[1.75rem] font-semibold leading-[1.2] tracking-[-0.02em] text-foreground">
+                  Explore o catálogo
+                </h1>
+                <p className="mt-1 text-[0.9375rem] font-normal leading-[1.5] text-muted-foreground">
+                  Peças únicas e autênticas.
+                </p>
+              </div>
+              <FavoritesShortcut />
             </div>
 
             <div className="mb-8 md:mb-10">
               <CategoryFilters
                 categories={categoryItems}
-                selectedCategory={params.categoria}
+                selectedCategory={params.category}
               />
             </div>
 

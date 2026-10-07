@@ -1,5 +1,5 @@
-// Helpers puros de autorização por grupo (sem acesso a cookies/document),
-// seguros para usar no cliente e no servidor.
+// Pure group-authorization helpers (no cookie/document access),
+// safe to use on both the client and the server.
 
 import type { GoogleUser } from "@/shared/types";
 

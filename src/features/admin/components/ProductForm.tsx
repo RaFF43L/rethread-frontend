@@ -57,7 +57,7 @@ const schema = z.object({
   size: z.string().min(1, "Informe o tamanho"),
 });
 
-type FormValues = z.infer<typeof schema>;
+export type FormValues = z.infer<typeof schema>;
 
 type MediaItem =
   | { kind: "existing"; imageId: number; url: string; src: string }
@@ -123,7 +123,7 @@ export function ProductForm({
       isMounted.current = true;
       return;
     }
-    setValue("size", "" as any);
+    setValue("size", "");
   }, [selectedCategory, setValue]);
 
   const handleFiles = async (selected: FileList | null) => {
@@ -237,7 +237,7 @@ export function ProductForm({
         const newImageItems = mediaItems.filter(
           (m): m is Extract<MediaItem, { kind: "new" }> => m.kind === "new",
         );
-        // Ordem dos uploads: imagens novas primeiro, depois vídeos
+        // Upload order: new images first, then videos
         const uploadFiles: File[] = [
           ...newImageItems.map((item) => item.file),
           ...videoFiles,
@@ -281,8 +281,8 @@ export function ProductForm({
             await registerMedia(productId, key, file);
           }
         } else {
-          // Criação: o backend gera todas as URLs pré-assinadas na própria
-          // resposta, na mesma ordem do array `media` enviado.
+          // Creation: the backend generates all presigned URLs in the
+          // response itself, in the same order as the `media` array sent.
           const created = await productsService.createProduct(
             {
               ...productPayload,
@@ -308,10 +308,13 @@ export function ProductForm({
         }
 
         router.push(redirectTo);
-      } catch (err: any) {
-        const msg = Array.isArray(err?.message)
-          ? err.message.join(", ")
-          : err?.message || "Erro ao salvar produto";
+      } catch (err) {
+        const message = (err as { message?: unknown })?.message;
+        const msg = Array.isArray(message)
+          ? message.join(", ")
+          : typeof message === "string"
+            ? message
+            : "Erro ao salvar produto";
         setServerError(msg);
       }
     });
@@ -395,14 +398,14 @@ export function ProductForm({
                     />
                   </div>
 
-                  {/* Capa badge */}
+                  {/* Cover badge */}
                   {i === 0 && (
                     <span className="absolute top-0.5 left-0.5 bg-black/60 text-white text-[9px] px-1 rounded leading-4">
                       Capa
                     </span>
                   )}
 
-                  {/* X — sempre visível, vermelho */}
+                  {/* X — always visible, red */}
                   <button
                     type="button"
                     onClick={() => removeItem(i)}
@@ -411,7 +414,7 @@ export function ProductForm({
                     <X className="w-3 h-3" />
                   </button>
 
-                  {/* Mover esquerda (fallback mobile) */}
+                  {/* Move left (mobile fallback) */}
                   {i > 0 && (
                     <button
                       type="button"
@@ -422,7 +425,7 @@ export function ProductForm({
                     </button>
                   )}
 
-                  {/* Mover direita (fallback mobile) */}
+                  {/* Move right (mobile fallback) */}
                   {i < mediaItems.length - 1 && (
                     <button
                       type="button"
@@ -458,7 +461,7 @@ export function ProductForm({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            {/* Marca — opcional */}
+            {/* Brand — optional */}
             <FormField
               label="Marca"
               htmlFor="marca"
@@ -540,7 +543,7 @@ export function ProductForm({
               />
             </FormField>
 
-            {/* Tamanho — input livre para calça, select para o resto */}
+            {/* Size — free input for pants, select for the rest */}
             <FormField label="Tamanho" required error={errors.size?.message}>
               {selectedCategory === "calca" ? (
                 <Input

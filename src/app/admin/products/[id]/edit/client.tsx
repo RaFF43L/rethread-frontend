@@ -1,6 +1,6 @@
 "use client";
 
-import { ProductForm } from "@/features/admin/components/ProductForm";
+import { ProductForm, type FormValues } from "@/features/admin/components/ProductForm";
 import { Button } from "@/shared/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -33,8 +33,8 @@ export function EditProductClient({ product }: EditProductClientProps) {
           cor: product.color,
           descricao: product.description,
           preco: product.price,
-          category: product.category as any,
-          size: product.size as any,
+          category: product.category as FormValues["category"],
+          size: product.size ?? "",
         }}
         existingImages={product.imageDetails ?? []}
         submitLabel="Salvar Alterações"

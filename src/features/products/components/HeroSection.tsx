@@ -63,7 +63,7 @@ export function HeroSection({ totalProducts }: HeroSectionProps) {
         
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <div className="w-[280px] md:w-[320px] h-[360px] md:h-[440px] border border-coral/20 flex flex-col items-center justify-center gap-4">
-            {/* Aqui pode ir uma imagem destaque quando houver */}
+            {/* A featured image can go here when available */}
             <div className="w-20 h-20 rounded-full border-2 border-coral/20 flex items-center justify-center">
               <svg
                 className="w-10 h-10 text-coral/20"

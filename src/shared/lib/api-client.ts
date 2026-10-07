@@ -1,14 +1,14 @@
-// Cliente HTTP centralizado para comunicação com o backend
+// Centralized HTTP client for communicating with the backend
 
 import { ApiError } from '@/shared/types';
 import { env } from '@/shared/lib/env';
 
 function getBaseUrl(): string {
   if (typeof window !== 'undefined') {
-    // No browser: usa o proxy do Next.js para evitar CORS
+    // In the browser: use the Next.js proxy to avoid CORS
     return '/api/backend';
   }
-  // No servidor: chama a API diretamente
+  // On the server: call the API directly
   return env.apiUrl;
 }
 
@@ -46,7 +46,7 @@ class ApiClient {
     return this.handleResponse<T>(response);
   }
 
-  async post<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+  async post<T>(endpoint: string, body?: unknown, options?: RequestInit): Promise<T> {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
       method: 'POST',
@@ -60,7 +60,7 @@ class ApiClient {
     return this.handleResponse<T>(response);
   }
 
-  async put<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
+  async put<T>(endpoint: string, body?: unknown, options?: RequestInit): Promise<T> {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
       method: 'PUT',
@@ -94,12 +94,12 @@ class ApiClient {
           ...options,
           headers: { ...options?.headers, Authorization: `Bearer ${token}` },
         }),
-      post: <T>(endpoint: string, body?: any, options?: RequestInit) =>
+      post: <T>(endpoint: string, body?: unknown, options?: RequestInit) =>
         this.post<T>(endpoint, body, {
           ...options,
           headers: { ...options?.headers, Authorization: `Bearer ${token}` },
         }),
-      put: <T>(endpoint: string, body?: any, options?: RequestInit) =>
+      put: <T>(endpoint: string, body?: unknown, options?: RequestInit) =>
         this.put<T>(endpoint, body, {
           ...options,
           headers: { ...options?.headers, Authorization: `Bearer ${token}` },

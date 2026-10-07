@@ -1,4 +1,4 @@
-// Utilitários para upload direto S3
+// Utilities for direct S3 upload
 import { apiClient } from '@/shared/lib/api-client';
 
 export interface PresignedUrlResponse {

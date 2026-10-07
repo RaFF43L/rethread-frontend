@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
 import { UserSessionProvider } from "@/features/auth/context/UserSessionProvider";
+import { FavoritesProvider } from "@/features/products/context/FavoritesProvider";
 import "./globals.css";
 
 const THEME_INIT_SCRIPT = `
@@ -81,7 +82,9 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider>
-          <UserSessionProvider>{children}</UserSessionProvider>
+          <UserSessionProvider>
+            <FavoritesProvider>{children}</FavoritesProvider>
+          </UserSessionProvider>
         </ThemeProvider>
       </body>
     </html>

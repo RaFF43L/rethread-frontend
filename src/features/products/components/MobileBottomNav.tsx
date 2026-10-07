@@ -125,7 +125,7 @@ export function MobileBottomNav({
                     type="button"
                     onClick={() =>
                       updateParam(
-                        "categoria",
+                        "category",
                         category === "" ? null : isSelected ? null : category,
                       )
                     }
@@ -143,7 +143,7 @@ export function MobileBottomNav({
             </div>
           </div>
 
-          {/* Tamanhos */}
+          {/* Sizes */}
           <div>
             <h4 className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground mb-3">
               Tamanho

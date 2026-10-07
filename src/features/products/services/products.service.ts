@@ -69,7 +69,7 @@ export class ProductsService {
     }
 
     if (backend.videos && Array.isArray(backend.videos) && backend.videos.length > 0) {
-      videos = backend.videos.map((v: any) => v.urlS3).filter(Boolean);
+      videos = backend.videos.map((v) => v.urlS3).filter(Boolean);
     }
 
     return {
@@ -196,6 +196,34 @@ export class ProductsService {
 
   async deleteProduct(id: string, token: string): Promise<void> {
     return apiClient.withAuth(token).delete<void>(`/products/${id}`);
+  }
+
+  // --- Favorites (require authentication; use the product's numeric id) ---
+
+  async getFavorites(token: string, params: GetProductsParams = {}): Promise<PaginatedResponse<Product>> {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.limit) searchParams.append('limit', params.limit.toString());
+    const query = searchParams.toString();
+    const endpoint = `/favorites${query ? `?${query}` : ''}`;
+    const response = await apiClient.withAuth(token).get<BackendPaginatedResponse<ProductBackend>>(endpoint);
+    return {
+      data: response.data.map(p => this.adaptProduct(p)),
+      pagination: {
+        page: response.page,
+        limit: response.limit,
+        total: response.total,
+        totalPages: Math.ceil(response.total / response.limit),
+      },
+    };
+  }
+
+  async addFavorite(productId: number, token: string): Promise<void> {
+    return apiClient.withAuth(token).put<void>(`/favorites/${productId}`);
+  }
+
+  async removeFavorite(productId: number, token: string): Promise<void> {
+    return apiClient.withAuth(token).delete<void>(`/favorites/${productId}`);
   }
 }
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import { HeaderUserMenu } from "@/features/products/components/HeaderUserMenu";
+import { HeaderFavorites } from "@/features/products/components/HeaderFavorites";
 
 export function SiteHeader() {
   return (
@@ -34,6 +35,7 @@ export function SiteHeader() {
           </Link>
 
           <div className="flex items-center gap-3">
+            <HeaderFavorites />
             <HeaderUserMenu />
             <ThemeToggle />
           </div>

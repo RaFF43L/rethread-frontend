@@ -1,26 +1,27 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import { useFavorites } from "@/shared/hooks/useFavorites";
+import { useFavorites } from "@/features/products/context/FavoritesProvider";
 import { cn } from "@/shared/lib/utils";
 import { useState } from "react";
+import type { Product } from "@/shared/types";
 
 interface FavoriteButtonProps {
-  productId: string;
+  product: Product;
   className?: string;
   size?: "sm" | "md" | "lg";
 }
 
-export function FavoriteButton({ productId, className, size = "md" }: FavoriteButtonProps) {
-  const { isFavorite, toggleFavorite, isLoaded } = useFavorites();
+export function FavoriteButton({ product, className, size = "md" }: FavoriteButtonProps) {
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [isAnimating, setIsAnimating] = useState(false);
-  const favorite = isLoaded && isFavorite(productId);
+  const favorite = isFavorite(product.numericId);
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    toggleFavorite(productId);
+
+    void toggleFavorite(product);
     setIsAnimating(true);
     setTimeout(() => setIsAnimating(false), 200);
   };
@@ -37,23 +38,12 @@ export function FavoriteButton({ productId, className, size = "md" }: FavoriteBu
     lg: "w-6 h-6",
   };
 
-  if (!isLoaded) {
-    return (
-      <div
-        className={cn(
-          "rounded-full bg-surface/80 border border-line backdrop-blur-sm flex items-center justify-center",
-          sizeClasses[size],
-          className
-        )}
-      />
-    );
-  }
-
   return (
     <button
       type="button"
       onClick={handleClick}
       aria-label={favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+      aria-pressed={favorite}
       className={cn(
         "group relative rounded-full bg-surface/80 backdrop-blur-md",
         "flex items-center justify-center transition-colors duration-150",

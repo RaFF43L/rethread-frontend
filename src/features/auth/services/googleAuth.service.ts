@@ -1,6 +1,6 @@
-// Serviço do login com Google. O frontend NUNCA fala com o Cognito direto:
-// todas as chamadas passam pelo backend (via proxy /api/backend do api-client).
-// Não há /auth/me: os dados do usuário saem do idToken retornado no callback.
+// Google login service. The frontend NEVER talks to Cognito directly:
+// all calls go through the backend (via the api-client /api/backend proxy).
+// There is no /auth/me: the user data comes from the idToken returned in the callback.
 
 import { apiClient } from '@/shared/lib/api-client';
 import { GoogleCallbackResponse, GoogleLoginInit } from '@/shared/types';
@@ -8,13 +8,13 @@ import { GoogleCallbackResponse, GoogleLoginInit } from '@/shared/types';
 const CREDENTIALS: RequestInit = { credentials: 'include' };
 
 export const googleAuthService = {
-  // Inicia o login: o backend monta a URL de autorização e gera o state.
+  // Starts the login: the backend builds the authorization URL and generates the state.
   init(): Promise<GoogleLoginInit> {
     return apiClient.get<GoogleLoginInit>('/auth/google/authorize-url', CREDENTIALS);
   },
 
-  // Conclui o login: troca o code por tokens. O state é validado no frontend
-  // (CSRF) antes de chamar; o backend aceita somente { code }.
+  // Completes the login: exchanges the code for tokens. The state is validated on the
+  // frontend (CSRF) before calling; the backend accepts only { code }.
   callback(code: string): Promise<GoogleCallbackResponse> {
     return apiClient.post<GoogleCallbackResponse>('/auth/google/callback', { code }, CREDENTIALS);
   },

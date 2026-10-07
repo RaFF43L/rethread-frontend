@@ -4,8 +4,8 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useUserSession } from "@/features/auth/context/UserSessionProvider";
 import { cn } from "@/shared/lib/utils";
 
-// Ícone oficial do Google (4 cores). O botão em si permanece neutro (tokens do
-// tema); só o ícone usa as cores da marca, conforme o guia.
+// Official Google icon (4 colors). The button itself stays neutral (theme
+// tokens); only the icon uses the brand colors, per the guidelines.
 function GoogleIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true">
@@ -53,7 +53,7 @@ export function HeaderUserMenu() {
   const containerRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
 
-  // Fecha o menu ao clicar fora ou pressionar Esc.
+  // Close the menu when clicking outside or pressing Esc.
   useEffect(() => {
     if (!open) return;
 
@@ -74,17 +74,17 @@ export function HeaderUserMenu() {
     };
   }, [open]);
 
-  // Carregando a sessão: reserva o espaço do botão para evitar salto de layout.
+  // Loading the session: reserve the button's space to avoid layout shift.
   if (status === "loading") {
     return (
       <div
         aria-hidden="true"
-        className="h-9 w-9 sm:w-[132px] rounded-md bg-line animate-pulse motion-reduce:animate-none"
+        className="h-9 w-9 sm:w-[132px] rounded-md bg-muted animate-pulse motion-reduce:animate-none"
       />
     );
   }
 
-  // Deslogado: botão "Entrar com Google".
+  // Logged out: "Entrar com Google" button.
   if (status === "unauthenticated" || !user) {
     return (
       <div className="flex flex-col items-end gap-1">
@@ -105,7 +105,7 @@ export function HeaderUserMenu() {
     );
   }
 
-  // Logado: avatar + primeiro nome, com menu.
+  // Logged in: avatar + first name, with menu.
   const initials = getInitials(user.name, user.email);
   const firstName = getFirstName(user.name, user.email);
 

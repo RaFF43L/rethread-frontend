@@ -36,8 +36,8 @@ export function CategoryFilters({
 
   const updateCategory = (value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (value === null) params.delete("categoria");
-    else params.set("categoria", value);
+    if (value === null) params.delete("category");
+    else params.set("category", value);
     params.set("page", "1");
     startTransition(() => {
       router.push(`/?${params.toString()}`);

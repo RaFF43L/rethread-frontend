@@ -7,8 +7,8 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Gate único: sem sessão Google @admin, mostra a tela amigável (sem flash,
-  // renderizada no servidor) e não monta a área administrativa.
+  // Single gate: without an @admin Google session, show the friendly screen (no flash,
+  // server-rendered) and do not mount the admin area.
   if (!(await hasAdminAccess())) {
     return <AdminAccessDenied />;
   }
