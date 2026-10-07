@@ -41,6 +41,7 @@ import {
 import { registerProductVideo } from "@/features/products/services/register-video";
 import { productsService } from "@/features/products/services/products.service";
 import { apiClient } from "@/shared/lib/api-client";
+import { getSessionToken } from "@/features/auth/lib/session";
 
 const CATEGORIES = ["calca", "blusa", "camiseta", "short", "vestido"] as const;
 const SIZES = ["PP", "P", "M", "G", "GG", "XG", "Único"] as const;
@@ -222,12 +223,7 @@ export function ProductForm({
 
     startTransition(async () => {
       try {
-        const cookieName =
-          process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || "segunda_aura_token";
-        const token = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith(`${cookieName}=`))
-          ?.split("=")[1];
+        const token = getSessionToken() ?? undefined;
 
         const productPayload = {
           marca: values.marca || "",
