@@ -5,6 +5,7 @@ export const env = {
     (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3333')),
   whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999',
   authCookieName: process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'segunda_aura_token',
+  sessionCookieName: process.env.NEXT_PUBLIC_SESSION_COOKIE_NAME || 'segunda_aura_session',
   appName: process.env.NEXT_PUBLIC_APP_NAME || 'Segunda Aura Brechó',
   enableImageOptimization: process.env.NEXT_PUBLIC_ENABLE_IMAGE_OPTIMIZATION === 'true',
   isDevelopment: process.env.NODE_ENV === 'development',

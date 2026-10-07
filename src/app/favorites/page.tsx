@@ -5,7 +5,6 @@ import { useFavorites } from "@/shared/hooks/useFavorites";
 import { productsService } from "@/features/products/services/products.service";
 import { ProductCard } from "@/features/products/components/ProductCard";
 import { EmptyState } from "@/shared/components/EmptyState";
-import { QuickViewModal } from "@/shared/components/QuickViewModal";
 import { Button } from "@/shared/components/ui/button";
 import { Heart, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -15,7 +14,6 @@ export default function FavoritesPage() {
   const { favorites, isLoaded, clearFavorites } = useFavorites();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     async function loadFavoriteProducts() {
@@ -111,22 +109,12 @@ export default function FavoritesPage() {
             
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onQuickView={setQuickViewProduct}
-                />
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
           </>
         )}
       </main>
-
-      <QuickViewModal
-        product={quickViewProduct}
-        isOpen={!!quickViewProduct}
-        onClose={() => setQuickViewProduct(null)}
-      />
     </div>
   );
 }

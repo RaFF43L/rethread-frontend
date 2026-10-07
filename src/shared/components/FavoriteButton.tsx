@@ -22,7 +22,7 @@ export function FavoriteButton({ productId, className, size = "md" }: FavoriteBu
     
     toggleFavorite(productId);
     setIsAnimating(true);
-    setTimeout(() => setIsAnimating(false), 600);
+    setTimeout(() => setIsAnimating(false), 200);
   };
 
   const sizeClasses = {
@@ -41,7 +41,7 @@ export function FavoriteButton({ productId, className, size = "md" }: FavoriteBu
     return (
       <div
         className={cn(
-          "rounded-full bg-white/90 backdrop-blur-sm shadow-sm flex items-center justify-center",
+          "rounded-full bg-surface/80 border border-line backdrop-blur-sm flex items-center justify-center",
           sizeClasses[size],
           className
         )}
@@ -55,30 +55,25 @@ export function FavoriteButton({ productId, className, size = "md" }: FavoriteBu
       onClick={handleClick}
       aria-label={favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
       className={cn(
-        "group relative rounded-full bg-background/80 dark:bg-background/60 backdrop-blur-md shadow-sm hover:shadow-lg",
-        "flex items-center justify-center transition-all duration-200",
-        "hover:scale-110 active:scale-95",
-        "border border-border/40 hover:border-border/60",
-        favorite && "bg-coral/5 border-coral/30",
+        "group relative rounded-full bg-surface/80 backdrop-blur-md",
+        "flex items-center justify-center transition-colors duration-150",
+        "motion-safe:hover:scale-105 motion-safe:active:scale-95",
+        "border border-line",
+        favorite && "bg-action-soft border-action/30",
         sizeClasses[size],
         className
       )}
     >
       <Heart
         className={cn(
-          "transition-all duration-300",
+          "transition-colors duration-150",
           iconSizes[size],
           favorite
-            ? "fill-coral stroke-coral"
-            : "stroke-muted-foreground group-hover:stroke-coral",
-          isAnimating && "animate-[heartbeat_0.6s_ease-in-out]"
+            ? "fill-action stroke-action"
+            : "stroke-muted-foreground group-hover:stroke-action",
+          isAnimating && "motion-safe:animate-[favPop_200ms_ease-out]"
         )}
       />
-      
-      {/* Ripple effect */}
-      {isAnimating && (
-        <span className="absolute inset-0 rounded-full bg-coral/20 animate-ping" />
-      )}
     </button>
   );
 }

@@ -124,3 +124,36 @@ export interface AuthResponse {
   idToken?: string;
   refreshToken?: string;
 }
+
+// Usuário autenticado via Google (campos retornados pelo backend em /auth/me).
+// Todos opcionais: a UI aplica fallback (iniciais) quando algo faltar.
+export interface GoogleUser {
+  name?: string;
+  email?: string;
+  picture?: string;
+  groups?: string[];
+}
+
+// Resposta do backend ao iniciar o login: a URL de autorização e o state.
+export interface GoogleLoginInit {
+  url: string;
+  state: string;
+}
+
+// Resposta do POST /auth/google/callback. Os dados do usuário vêm em `user`
+// (não há /auth/me). O accessToken é usado no logout; refreshToken não é usado
+// no frontend (sem troca de token aqui).
+export interface GoogleCallbackResponse {
+  accessToken?: string;
+  idToken?: string;
+  refreshToken?: string;
+  expiresIn?: number;
+  isNewUser?: boolean;
+  user?: {
+    id?: number;
+    name?: string;
+    email?: string;
+    pictureUrl?: string;
+    groups?: string[];
+  };
+}

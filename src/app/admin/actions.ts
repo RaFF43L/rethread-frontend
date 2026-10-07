@@ -1,24 +1,21 @@
 'use server';
 
-import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { env } from '@/shared/lib/env';
 import { redirect } from 'next/navigation';
+import { getServerAdminToken } from '@/features/auth/lib/session.server';
 
 export type ActionResult =
   | { success: true }
   | { success: false; error: string };
 
 async function getToken(): Promise<string | null> {
-  const cookieStore = await cookies();
-  return cookieStore.get(
-    process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'segunda_aura_token'
-  )?.value ?? null;
+  return getServerAdminToken();
 }
 
 export async function markAsSold(id: number): Promise<ActionResult> {
   const token = await getToken();
-  if (!token) redirect('/login');
+  if (!token) redirect('/');
 
   const res = await fetch(`${env.apiUrl}/products/${id}/sell`, {
     method: 'PATCH',
@@ -39,7 +36,7 @@ export async function markAsSold(id: number): Promise<ActionResult> {
 
 export async function revertSale(id: number): Promise<ActionResult> {
   const token = await getToken();
-  if (!token) redirect('/login');
+  if (!token) redirect('/');
 
   const res = await fetch(`${env.apiUrl}/products/${id}/revert-sale`, {
     method: 'PATCH',
@@ -60,7 +57,7 @@ export async function revertSale(id: number): Promise<ActionResult> {
 
 export async function deleteProduct(id: number): Promise<ActionResult> {
   const token = await getToken();
-  if (!token) redirect('/login');
+  if (!token) redirect('/');
 
   const res = await fetch(`${env.apiUrl}/products/${id}`, {
     method: 'DELETE',
@@ -80,7 +77,7 @@ export async function deleteProduct(id: number): Promise<ActionResult> {
 
 export async function createProduct(formData: FormData): Promise<ActionResult> {
   const token = await getToken();
-  if (!token) redirect('/login');
+  if (!token) redirect('/');
 
   let res: Response;
   try {
@@ -111,7 +108,7 @@ export async function updateProduct(
   data: { marca: string; cor: string; descricao: string; preco: string; category: string; size: string }
 ): Promise<ActionResult> {
   const token = await getToken();
-  if (!token) redirect('/login');
+  if (!token) redirect('/');
 
   const fd = new FormData();
   fd.append('marca', data.marca);

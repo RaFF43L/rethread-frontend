@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Cormorant_Garamond } from "next/font/google";
+import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
+import { UserSessionProvider } from "@/features/auth/context/UserSessionProvider";
 import "./globals.css";
 
 const THEME_INIT_SCRIPT = `
@@ -13,22 +14,13 @@ const THEME_INIT_SCRIPT = `
 })();
 `;
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  style: ["normal", "italic"],
-});
 
 export const metadata: Metadata = {
   title: "Segunda Aura Brechó - Moda Sustentável",
@@ -68,7 +60,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: "#000000",
+  themeColor: "#F7F6F2",
 };
 
 export default function RootLayout({
@@ -85,10 +77,12 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} antialiased`}
+        className={`${inter.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <UserSessionProvider>{children}</UserSessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

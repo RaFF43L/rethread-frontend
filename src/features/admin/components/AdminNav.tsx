@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useUserSession } from "@/features/auth/context/UserSessionProvider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
@@ -9,7 +9,7 @@ import { LayoutDashboard, Package, ExternalLink, LogOut } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
 export function AdminNav() {
-  const { logout } = useAuth();
+  const { logout } = useUserSession();
   const pathname = usePathname();
 
   const isActive = (path: string) => pathname === path;

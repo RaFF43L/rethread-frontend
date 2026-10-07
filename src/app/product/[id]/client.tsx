@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ImageCarousel } from "@/shared/components/ImageCarousel";
 import { FavoriteButton } from "@/shared/components/FavoriteButton";
-import { SustainabilityBadge } from "@/shared/components/SustainabilityBadge";
 import { ProductConditionScale } from "@/features/products/components/ProductConditionScale";
 import { ProductMeasurements } from "@/features/products/components/ProductMeasurements";
 import { useRecentlyViewed } from "@/shared/hooks/useRecentlyViewed";
 import { env } from "@/shared/lib/env";
 import {
+  formatPrice,
   formatWhatsAppLink,
-  getWhatsAppMessageText,
+  getProductInquiryMessage,
 } from "@/shared/utils/format";
-import { formatPrice } from "@/shared/utils/format";
-import { MessageCircle, ArrowLeft, Share2 } from "lucide-react";
-import { Badge } from "@/shared/components/ui/badge";
+import { MessageCircle, ArrowLeft, Share2, Leaf } from "lucide-react";
 import type { Product } from "@/shared/types";
 import { cn } from "@/shared/lib/utils";
 
@@ -22,159 +21,224 @@ interface ProductDetailClientProps {
   product: Product;
 }
 
+const CATEGORY_DISPLAY: Record<string, string> = {
+  calca: "Calça",
+  blusa: "Blusa",
+  camiseta: "Camiseta",
+  short: "Short",
+  vestido: "Vestido",
+  saia: "Saia",
+  jaqueta: "Jaqueta",
+  macacao: "Macacão",
+};
+
+function formatCategory(category: string): string {
+  return (
+    CATEGORY_DISPLAY[category] ??
+    category.charAt(0).toUpperCase() + category.slice(1)
+  );
+}
+
+const WHATSAPP_BUTTON =
+  "inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-action px-4 text-sm font-medium text-action-foreground transition-colors duration-150 ease-out hover:bg-action/90 motion-safe:active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2 focus-visible:ring-offset-surface";
+
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const { addRecentlyViewed } = useRecentlyViewed();
+  const router = useRouter();
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const [canShare, setCanShare] = useState(false);
+  const [pageUrl, setPageUrl] = useState("");
+  const [showMobileBar, setShowMobileBar] = useState(false);
 
   useEffect(() => {
     addRecentlyViewed(product);
   }, [product, addRecentlyViewed]);
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: product.name,
-          text: `${product.name} - ${formatPrice(product.price)}`,
-          url: window.location.href,
-        });
-      } catch (err) {
-        // User cancelled or error occurred
-      }
+  useEffect(() => {
+    // Client-only values read after mount to avoid hydration mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCanShare(typeof navigator !== "undefined" && "share" in navigator);
+    setPageUrl(window.location.href);
+  }, []);
+
+  useEffect(() => {
+    const node = ctaRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowMobileBar(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
     }
   };
 
-  const badges = [product.era, ...(product.style ?? []), product.fit].filter(
-    (value): value is string => Boolean(value),
-  );
+  const handleShare = async () => {
+    if (!navigator.share) return;
+    try {
+      await navigator.share({
+        title: product.name,
+        text: `${product.name} - ${formatPrice(product.price)}`,
+        url: window.location.href,
+      });
+    } catch {
+      // User cancelled or sharing unavailable
+    }
+  };
+
+  const whatsappLink = product.available
+    ? formatWhatsAppLink(
+        env.whatsappNumber,
+        getProductInquiryMessage(
+          {
+            name: product.name,
+            price: product.price,
+            size: product.size,
+            color: product.color,
+          },
+          pageUrl,
+        ),
+      )
+    : undefined;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
-        <div className="flex items-center justify-between px-4 h-16">
-          <a
-            href="/"
-            className={cn(
-              "flex items-center gap-2 text-foreground",
-              "hover:opacity-70 transition-opacity"
-            )}
+      {/* Top bar */}
+      <header className="sticky top-0 z-50 bg-surface border-b border-line">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="inline-flex items-center gap-2 text-foreground transition-opacity hover:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action rounded"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="h-5 w-5" />
             <span className="text-sm font-medium">Voltar</span>
-          </a>
-          
+          </button>
+
           <div className="flex items-center gap-2">
-            {typeof window !== 'undefined' && 'share' in navigator && (
+            {canShare && (
               <button
+                type="button"
                 onClick={handleShare}
-                className={cn(
-                  "p-2 rounded-full hover:bg-secondary transition-colors",
-                  "focus:outline-none focus:ring-2 focus:ring-foreground/20"
-                )}
+                className="rounded-full p-2 text-foreground transition-colors hover:bg-action-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
                 aria-label="Compartilhar"
               >
-                <Share2 className="w-5 h-5" />
+                <Share2 className="h-5 w-5" />
               </button>
             )}
             <FavoriteButton productId={product.id} size="md" />
-            <Badge
-              variant={product.available ? "default" : "secondary"}
-              className="text-xs font-medium ml-1"
-            >
-              {product.available ? "Disponível" : "Vendido"}
-            </Badge>
           </div>
         </div>
       </header>
 
       {/* Main content */}
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="grid md:grid-cols-2 gap-8 md:gap-12">
-          {/* Left column: Images */}
-          <div className="animate-in fade-in slide-in-from-left-4 duration-700">
+      <main className="mx-auto max-w-6xl px-4 pb-24 pt-8 md:pb-8">
+        <div className="grid items-start gap-8 md:grid-cols-[55fr_45fr] md:gap-12">
+          {/* Left column: photo */}
+          <div className="motion-safe:animate-[productFade_300ms_ease-out_both]">
             <ImageCarousel
               images={product.images}
               videos={product.videos}
               alt={product.name}
               priority
+              objectFit="contain"
             />
           </div>
 
-          {/* Right column: Details */}
-          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-700 delay-200">
-            {/* Product name */}
-            <div className="space-y-3">
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                {product.name}
-              </h1>
-            </div>
+          {/* Right column: info */}
+          <div className="flex flex-col gap-5">
+            {/* Name */}
+            <h1
+              className="text-[1.75rem] font-semibold leading-[1.2] tracking-[-0.02em] text-foreground motion-safe:animate-[blockRise_300ms_ease-out_both]"
+              style={{ animationDelay: "0ms" }}
+            >
+              {product.name}
+            </h1>
 
             {/* Price */}
-            <div className="text-4xl font-bold text-foreground">
+            <p
+              className="text-[1.5rem] font-semibold text-foreground motion-safe:animate-[blockRise_300ms_ease-out_both]"
+              style={{ animationDelay: "50ms" }}
+            >
               {formatPrice(product.price)}
-            </div>
+            </p>
 
-            {/* Badges */}
-            {badges.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {badges.map((badge) => (
-                  <Badge key={badge} variant="outline" className="text-xs">
-                    {badge}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            {/* Product info */}
-            <div className="flex flex-wrap gap-3 py-4 border-y border-border">
+            {/* Attributes + availability */}
+            <div
+              className="flex flex-wrap items-center gap-2 motion-safe:animate-[blockRise_300ms_ease-out_both]"
+              style={{ animationDelay: "100ms" }}
+            >
+              <span
+                className={cn(
+                  "inline-flex h-7 items-center rounded-md px-2.5 text-[0.75rem] font-medium",
+                  product.available
+                    ? "bg-action text-action-foreground"
+                    : "border border-line text-muted-foreground",
+                )}
+              >
+                {product.available ? "Disponível" : "Indisponível"}
+              </span>
               {product.category && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Categoria:</span>
-                  <Badge variant="secondary">{product.category}</Badge>
-                </div>
+                <span className="inline-flex h-7 items-center rounded-md bg-action-soft px-2.5 text-[0.8125rem] text-foreground">
+                  {formatCategory(product.category)}
+                </span>
               )}
               {product.size && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Tamanho:</span>
-                  <Badge variant="secondary">{product.size}</Badge>
-                </div>
+                <span className="inline-flex h-7 items-center rounded-md bg-action-soft px-2.5 text-[0.8125rem] text-foreground">
+                  Tamanho {product.size}
+                </span>
               )}
               {product.color && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Cor:</span>
-                  <Badge variant="secondary">{product.color}</Badge>
-                </div>
+                <span className="inline-flex h-7 items-center rounded-md bg-action-soft px-2.5 text-[0.8125rem] text-foreground">
+                  {product.color}
+                </span>
               )}
             </div>
-
-            {/* Condition scale */}
-            {product.condition && (
-              <div className="py-4 space-y-3">
-                <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                  Condição da Peça
-                </h3>
-                <ProductConditionScale condition={product.condition} />
-              </div>
-            )}
 
             {/* Description */}
             {product.description && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+              <div
+                className="motion-safe:animate-[blockRise_300ms_ease-out_both]"
+                style={{ animationDelay: "150ms" }}
+              >
+                <h2 className="mb-1 text-sm font-medium text-foreground">
                   Descrição
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
+                </h2>
+                <p className="text-[0.9375rem] leading-[1.5] text-muted-foreground">
                   {product.description}
                 </p>
               </div>
             )}
 
+            {/* Condition */}
+            {product.condition && (
+              <div
+                className="motion-safe:animate-[blockRise_300ms_ease-out_both]"
+                style={{ animationDelay: "200ms" }}
+              >
+                <h2 className="mb-2 text-sm font-medium text-foreground">
+                  Condição da peça
+                </h2>
+                <ProductConditionScale condition={product.condition} />
+              </div>
+            )}
+
             {/* Measurements */}
             {product.measurements && product.measurements.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+              <div
+                className="motion-safe:animate-[blockRise_300ms_ease-out_both]"
+                style={{ animationDelay: "250ms" }}
+              >
+                <h2 className="mb-2 text-sm font-medium text-foreground">
                   Medidas
-                </h3>
+                </h2>
                 <ProductMeasurements
                   measurements={product.measurements}
                   size={product.size}
@@ -182,45 +246,81 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               </div>
             )}
 
-            {/* Sustainability info */}
-            <div className="space-y-3 pt-4">
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-                Impacto Positivo
-              </h3>
-              <SustainabilityBadge variant="leaf" />
+            {/* Positive impact */}
+            <div
+              className="motion-safe:animate-[blockRise_300ms_ease-out_both]"
+              style={{ animationDelay: "300ms" }}
+            >
+              <h2 className="mb-2 text-sm font-medium text-foreground">
+                Impacto positivo
+              </h2>
+              <div className="flex items-start gap-3 rounded-md border border-line bg-action-soft p-4">
+                <div className="rounded-full bg-surface p-2">
+                  <Leaf className="h-5 w-5 text-action" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-foreground">
+                    Sustentável
+                  </h3>
+                  <p className="text-[0.8125rem] text-muted-foreground">
+                    Reduz impacto ambiental
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* CTA */}
-            {product.available && (
-              <div className="pt-6 sticky bottom-4 bg-background/95 backdrop-blur-sm rounded-xl p-4 border border-border shadow-lg">
+            {/* Buy action */}
+            <div
+              ref={ctaRef}
+              className="rounded-md border border-line p-4 motion-safe:animate-[blockRise_300ms_ease-out_both]"
+              style={{ animationDelay: "350ms" }}
+            >
+              {product.available && whatsappLink ? (
                 <a
-                  href={formatWhatsAppLink(
-                    env.whatsappNumber,
-                    getWhatsAppMessageText({
-                      name: product.name,
-                      price: product.price,
-                      size: product.size,
-                    })
-                  )}
+                  href={whatsappLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={cn(
-                    "w-full flex items-center justify-center gap-3 py-4 px-6",
-                    "bg-[#25D366] hover:bg-[#20BA5A]",
-                    "text-white font-semibold rounded-xl",
-                    "transition-all duration-300",
-                    "hover:scale-105 active:scale-95",
-                    "shadow-lg hover:shadow-xl"
-                  )}
+                  className={WHATSAPP_BUTTON}
                 >
-                  <MessageCircle className="w-6 h-6" />
+                  <MessageCircle className="h-[18px] w-[18px]" />
                   Tenho interesse nesta peça
                 </a>
-              </div>
-            )}
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex h-11 w-full cursor-not-allowed items-center justify-center gap-2 rounded-md border border-line bg-transparent px-4 text-sm font-medium text-muted-foreground"
+                >
+                  Peça indisponível
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </main>
+
+      {/* Mobile sticky action bar */}
+      {product.available && whatsappLink && (
+        <div
+          className={cn(
+            "fixed inset-x-0 bottom-0 z-50 flex items-center gap-3 border-t border-line bg-surface px-4 py-2 md:hidden motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out",
+            showMobileBar ? "translate-y-0" : "translate-y-full",
+          )}
+        >
+          <span className="text-base font-semibold text-foreground">
+            {formatPrice(product.price)}
+          </span>
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-auto inline-flex h-11 items-center justify-center gap-2 rounded-md bg-action px-4 text-sm font-medium text-action-foreground transition-colors duration-150 ease-out hover:bg-action/90 motion-safe:active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          >
+            <MessageCircle className="h-[18px] w-[18px]" />
+            Tenho interesse nesta peça
+          </a>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,201 +1,83 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Search, Eye } from "lucide-react";
+import Link from "next/link";
 import { Product } from "@/shared/types";
-import { formatPrice } from "@/shared/utils/format";
+import {
+  formatWhatsAppLink,
+  getWhatsAppMessageText,
+} from "@/shared/utils/format";
 import { ProductImage } from "@/shared/components/ProductImage";
-import { FavoriteButton } from "@/shared/components/FavoriteButton";
-import { SustainabilityBadge } from "@/shared/components/SustainabilityBadge";
 import { cn } from "@/shared/lib/utils";
-import { ProductConditionScale } from "./ProductConditionScale";
+import { env } from "@/shared/lib/env";
 
 export type ProductCardViewMode = "editorial" | "compact";
 
 interface ProductCardProps {
   product: Product;
   whatsappNumber?: string;
-  /** "editorial" = imagem grande estilo moodboard; "compact" = grade tradicional (default, mantém comportamento atual) */
   viewMode?: ProductCardViewMode;
-  /** Chamado ao clicar em "Garimpar similares"; default navega para o catálogo filtrado por categoria */
-  onFindSimilar?: (product: Product) => void;
-  /** Callback para abrir Quick View */
-  onQuickView?: (product: Product) => void;
 }
 
 export function ProductCard({
   product,
-  viewMode = "compact",
-  onFindSimilar,
-  onQuickView,
+  whatsappNumber,
 }: ProductCardProps) {
-  const router = useRouter();
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const isEditorial = viewMode === "editorial";
-  const secondImage = product.images[1];
-
-  const goToDetails = () => router.push(`/product/${product.id}`);
-
-  const handleFindSimilar = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onFindSimilar) {
-      onFindSimilar(product);
-      return;
-    }
-    if (product.category) {
-      router.push(`/?categoria=${encodeURIComponent(product.category)}`);
-    }
-  };
-
-  const handleQuickView = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onQuickView) {
-      onQuickView(product);
-    }
-  };
-
-  const badges = [product.era, ...(product.style ?? []), product.fit].filter(
-    (value): value is string => Boolean(value),
-  );
-
   return (
-    <article className={cn("group", imageLoaded && "animate-in fade-in duration-500")}>
-      <div
-        onClick={goToDetails}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            goToDetails();
-          }
-        }}
-        tabIndex={0}
-        role="button"
+    <article className="group flex flex-col">
+      {/* Image area */}
+      <Link
+        href={`/product/${product.id}`}
+        className="relative block aspect-[15/16] overflow-hidden rounded-md border border-line bg-muted"
         aria-label={`Ver detalhes de ${product.name}`}
-        className={cn(
-          "relative overflow-hidden bg-neutral-100 dark:bg-card mb-4 cursor-pointer",
-          "transition-all duration-300 ease-out",
-          "group-hover:shadow-xl",
-          isEditorial ? "aspect-[4/5]" : "aspect-[3/4]",
-        )}
       >
         <ProductImage
           src={product.images[0] ?? "/placeholder-product.svg"}
           alt={product.name}
           objectFit="cover"
         />
-
-        {secondImage && (
-          <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-focus-visible:opacity-100">
-            <ProductImage 
-              src={secondImage} 
-              alt="" 
-              objectFit="cover"
-            />
-          </div>
+        {!product.available && (
+          <span className="absolute left-2 top-2 z-20 rounded-sm bg-foreground/80 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.1em] text-surface">
+            Vendido
+          </span>
         )}
+      </Link>
 
-        {/* Top badges and availability */}
-        <div className="absolute left-3 top-3 right-3 z-20 flex items-start justify-between gap-2">
-          {product.condition && (
-            <div className="bg-neutral-950/85 px-2 py-1">
-              <ProductConditionScale condition={product.condition} compact />
-            </div>
-          )}
-          
-          {!product.available && (
-            <span className="bg-neutral-950/85 px-2 py-1 text-[9px] tracking-[0.12em] uppercase text-coral font-medium">
-              Vendido
-            </span>
-          )}
-        </div>
-
-        {/* Action buttons */}
-        <div className={cn(
-          "absolute bottom-2 left-2 right-2 z-20 flex items-center justify-between gap-2",
-          "transition-all duration-300",
-          "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
-          "translate-y-2 group-hover:translate-y-0"
-        )}>
-          <FavoriteButton productId={product.id} size="sm" />
-          
-          <div className="flex gap-2">
-          {onQuickView && (
-            <button
-              type="button"
-              onClick={handleQuickView}
-              className={cn(
-                "flex items-center justify-center rounded-full",
-                "bg-background/90 backdrop-blur-sm p-2 text-foreground",
-                "shadow-sm hover:shadow-md transition-all duration-200",
-                "hover:bg-background hover:scale-110 active:scale-95"
-              )}
-              aria-label={`Visualização rápida de ${product.name}`}
-            >
-              <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
-          )}
-          
-          {product.category && (
-            <button
-              type="button"
-              onClick={handleFindSimilar}
-              className={cn(
-                "flex items-center justify-center rounded-full",
-                "bg-background/90 backdrop-blur-sm p-2 text-foreground",
-                "shadow-sm hover:shadow-md transition-all duration-200",
-                "hover:bg-background hover:scale-110 active:scale-95"
-              )}
-              aria-label={`Garimpar peças parecidas com ${product.name}`}
-            >
-              <Search className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
-          )}
-          </div>
-        </div>
-
-        {/* Overlay gradient on hover */}
-        <div className={cn(
-          "absolute inset-0 bg-gradient-to-t from-black/20 to-transparent",
-          "opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        )} />
-      </div>
-
-      <div
-        onClick={goToDetails}
-        className="space-y-1.5 cursor-pointer"
-      >
-        {product.brand && (
-          <p className="text-[10px] tracking-[0.20em] uppercase text-coral font-semibold">
-            {product.brand}
-          </p>
-        )}
-        <h3 className={cn(
-          "text-[14px] font-medium text-neutral-950 line-clamp-1 leading-snug",
-          "transition-colors duration-200"
-        )}>
+      {/* Text block */}
+      <div className="flex flex-1 flex-col">
+        <h3 className="mt-2.5 text-base font-medium leading-snug text-foreground line-clamp-1">
           {product.name}
         </h3>
-        {product.condition && (
-          <p className="text-[11px] text-neutral-600">
-            {product.condition === 'new_with_tag' && 'Nova com etiqueta'}
-            {product.condition === 'excellent' && 'Excelente estado'}
-            {product.condition === 'very_good' && 'Muito bom estado'}
-            {product.condition === 'visible_marks' && 'Marcas visíveis'}
+        {product.category && (
+          <p className="mt-0.5 text-[0.8125rem] font-normal text-muted-foreground">
+            {product.category}
           </p>
         )}
-        <div className="flex items-baseline gap-2 pt-0.5">
-          <span className="text-[20px] font-bold text-neutral-950 font-serif">
-            {formatPrice(product.price)}
-          </span>
-          {product.size && (
-            <span className="text-[11px] text-neutral-700">
-              · Tam. {product.size}
-            </span>
-          )}
-        </div>
+        {product.available && (
+          <a
+            href={formatWhatsAppLink(
+              whatsappNumber || env.whatsappNumber,
+              getWhatsAppMessageText({
+                name: product.name,
+                price: product.price,
+                size: product.size,
+              })
+            )}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2.5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-action px-4 text-sm font-medium text-action-foreground transition-colors duration-150 ease-out hover:bg-action/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+            </svg>
+            Comprar via WhatsApp
+          </a>
+        )}
       </div>
     </article>
   );
@@ -210,11 +92,11 @@ export function ProductCardSkeleton({
     <div className="animate-pulse" aria-hidden="true">
       <div
         className={cn(
-          "bg-muted mb-3 rounded-2xl",
+          "bg-muted mb-3 rounded-md",
           viewMode === "editorial" ? "aspect-[4/5]" : "aspect-[3/4]",
         )}
       />
-      <div className="h-3 w-2/3 bg-muted rounded mb-2" />
+      <div className="h-3 w-2/3 bg-muted rounded mb-1.5" />
       <div className="h-3 w-1/3 bg-muted rounded" />
     </div>
   );

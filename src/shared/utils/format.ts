@@ -23,6 +23,27 @@ export function getWhatsAppMessageText(product: { name: string; price: number; s
   return lines.join('\n');
 }
 
+/**
+ * Mensagem de interesse da página de detalhe da peça.
+ * Usa apenas dados existentes; campos ausentes são omitidos da frase.
+ * Ex.: "Olá! Tenho interesse nesta peça: Vestido (tamanho M, Azul) - R$ 120,00. https://..."
+ */
+export function getProductInquiryMessage(
+  product: { name: string; price: number; size?: string; color?: string },
+  url?: string,
+): string {
+  const attributes = [
+    product.size ? `tamanho ${product.size}` : null,
+    product.color ? product.color : null,
+  ].filter(Boolean);
+
+  let message = `Olá! Tenho interesse nesta peça: ${product.name}`;
+  if (attributes.length > 0) message += ` (${attributes.join(", ")})`;
+  message += ` - ${formatPrice(product.price)}.`;
+  if (url) message += ` ${url}`;
+  return message;
+}
+
 function cleanUrlForWhatsApp(url: string): string {
   try {
     const urlObj = new URL(url);

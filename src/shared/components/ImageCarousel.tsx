@@ -81,7 +81,12 @@ export function ImageCarousel({
 
   if (totalItems === 0) {
     return (
-      <div className={cn("aspect-square bg-secondary", className)}>
+      <div
+        className={cn(
+          "aspect-square bg-surface rounded-md border border-line",
+          className,
+        )}
+      >
         <div className="w-full h-full flex items-center justify-center text-muted-foreground">
           Sem imagens disponíveis
         </div>
@@ -93,7 +98,7 @@ export function ImageCarousel({
     <div className={cn("relative group", className)}>
       {/* Main image/video area */}
       <div
-        className="relative aspect-square bg-secondary rounded-lg overflow-hidden"
+        className="relative aspect-square bg-surface rounded-md border border-line overflow-hidden group/photo"
         onMouseMove={handleMouseMove}
         onMouseLeave={() => isZoomed && setZoomPosition({ x: 50, y: 50 })}
       >
@@ -112,12 +117,17 @@ export function ImageCarousel({
             onClick={handleImageClick}
             className={cn(
               "relative w-full h-full cursor-zoom-in transition-transform duration-300",
+              !isZoomed && "motion-safe:md:group-hover/photo:scale-[1.03]",
               isZoomed && "cursor-zoom-out"
             )}
-            style={{
-              transform: isZoomed ? `scale(${zoomLevel})` : "scale(1)",
-              transformOrigin: isZoomed ? `${zoomPosition.x}% ${zoomPosition.y}%` : "center",
-            }}
+            style={
+              isZoomed
+                ? {
+                    transform: `scale(${zoomLevel})`,
+                    transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                  }
+                : undefined
+            }
           >
             <ProductImage
               src={images[currentIndex]}
@@ -144,9 +154,9 @@ export function ImageCarousel({
                   setZoomLevel(1);
                 }}
                 className={cn(
-                  "p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg",
-                  "hover:bg-white transition-all duration-200",
-                  "hover:scale-110 active:scale-95"
+                  "p-2 rounded-full bg-surface/90 border border-line backdrop-blur-sm",
+                  "hover:bg-surface transition-all duration-200",
+                  "motion-safe:hover:scale-110 motion-safe:active:scale-95"
                 )}
                 aria-label="Fechar zoom"
               >
@@ -161,9 +171,9 @@ export function ImageCarousel({
               }}
               disabled={zoomLevel >= 3}
               className={cn(
-                "p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg",
-                "hover:bg-white transition-all duration-200",
-                "hover:scale-110 active:scale-95",
+                "p-2 rounded-full bg-surface/90 border border-line backdrop-blur-sm",
+                "hover:bg-surface transition-all duration-200",
+                "motion-safe:hover:scale-110 motion-safe:active:scale-95",
                 "disabled:opacity-50 disabled:cursor-not-allowed"
               )}
               aria-label="Aumentar zoom"
@@ -177,9 +187,9 @@ export function ImageCarousel({
               }}
               disabled={zoomLevel <= 1}
               className={cn(
-                "p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg",
-                "hover:bg-white transition-all duration-200",
-                "hover:scale-110 active:scale-95",
+                "p-2 rounded-full bg-surface/90 border border-line backdrop-blur-sm",
+                "hover:bg-surface transition-all duration-200",
+                "motion-safe:hover:scale-110 motion-safe:active:scale-95",
                 "disabled:opacity-50 disabled:cursor-not-allowed"
               )}
               aria-label="Diminuir zoom"
@@ -196,10 +206,10 @@ export function ImageCarousel({
               onClick={goToPrevious}
               className={cn(
                 "absolute left-4 top-1/2 -translate-y-1/2 z-20",
-                "p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg",
-                "hover:bg-white transition-all duration-200",
+                "p-2 rounded-full bg-surface/90 border border-line backdrop-blur-sm",
+                "hover:bg-surface transition-all duration-200",
                 "opacity-0 group-hover:opacity-100",
-                "hover:scale-110 active:scale-95"
+                "motion-safe:hover:scale-110 motion-safe:active:scale-95"
               )}
               aria-label="Imagem anterior"
             >
@@ -209,10 +219,10 @@ export function ImageCarousel({
               onClick={goToNext}
               className={cn(
                 "absolute right-4 top-1/2 -translate-y-1/2 z-20",
-                "p-2 rounded-full bg-white/90 backdrop-blur-sm shadow-lg",
-                "hover:bg-white transition-all duration-200",
+                "p-2 rounded-full bg-surface/90 border border-line backdrop-blur-sm",
+                "hover:bg-surface transition-all duration-200",
                 "opacity-0 group-hover:opacity-100",
-                "hover:scale-110 active:scale-95"
+                "motion-safe:hover:scale-110 motion-safe:active:scale-95"
               )}
               aria-label="Próxima imagem"
             >
