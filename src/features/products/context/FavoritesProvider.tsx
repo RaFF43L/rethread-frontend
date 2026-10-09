@@ -9,7 +9,6 @@ import {
   useState,
 } from "react";
 import { useUserSession } from "@/features/auth/context/UserSessionProvider";
-import { getSessionToken } from "@/features/auth/lib/session";
 import { productsService } from "@/features/products/services/products.service";
 import type { Product } from "@/shared/types";
 
@@ -53,15 +52,9 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const token = getSessionToken();
-    if (!token) {
-      setStatus("idle");
-      return;
-    }
-
     setStatus("loading");
     productsService
-      .getFavorites(token, { limit: FAVORITES_LIMIT })
+      .getFavorites({ limit: FAVORITES_LIMIT })
       .then((res) => {
         if (!active) return;
         setFavorites(res.data);
@@ -91,12 +84,6 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const token = getSessionToken();
-      if (!token) {
-        await startLogin();
-        return;
-      }
-
       const id = product.numericId;
       if (pending.current.has(id)) return;
       pending.current.add(id);
@@ -112,9 +99,9 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
       try {
         if (wasFavorite) {
-          await productsService.removeFavorite(id, token);
+          await productsService.removeFavorite(id);
         } else {
-          await productsService.addFavorite(id, token);
+          await productsService.addFavorite(id);
         }
       } catch {
         // Revert on failure.

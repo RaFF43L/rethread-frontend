@@ -27,6 +27,23 @@ export interface ProductMediaInput {
   fileType: string;
 }
 
+export type ProductDepartment = 'feminino' | 'masculino' | 'unissex';
+export type ProductStretch = 'none' | 'low' | 'medium' | 'high';
+
+/** All measurements in centimeters; every field is optional. */
+export interface ProductMeasurementsInput {
+  chest?: number;
+  waist?: number;
+  hip?: number;
+  thigh?: number;
+  shoulder?: number;
+  sleeve?: number;
+  length?: number;
+  rise?: number;
+  inseam?: number;
+  hem?: number;
+}
+
 export interface CreateProductInput {
   marca: string;
   cor: string;
@@ -34,6 +51,18 @@ export interface CreateProductInput {
   preco: number;
   category: string;
   size: string;
+  // --- Optional editorial / AI-agent fields (CreateProductDto) ---
+  title?: string;
+  department?: ProductDepartment;
+  era?: string;
+  sizeRegion?: string;
+  fabric?: string;
+  stretch?: ProductStretch;
+  styleTags?: string[];
+  occasions?: string[];
+  condition?: string;
+  notes?: string;
+  measurements?: ProductMeasurementsInput;
   media?: ProductMediaInput[];
 }
 
@@ -181,32 +210,39 @@ export class ProductsService {
     return this.adaptProduct(response);
   }
 
-  async createProduct(product: CreateProductInput, token: string): Promise<CreateProductResponse> {
-    const response = await apiClient.withAuth(token).post<CreateProductBackendResponse>('/products', product);
+  // Authenticated writes. On the client `token` is omitted: the /api/backend
+  // proxy injects the Bearer from the HttpOnly cookie. On the server (admin
+  // actions) the caller passes the token read from the cookie store.
+  async createProduct(product: CreateProductInput, token?: string): Promise<CreateProductResponse> {
+    const client = token ? apiClient.withAuth(token) : apiClient;
+    const response = await client.post<CreateProductBackendResponse>('/products', product);
     return {
       product: this.adaptProduct(response.product),
       presignedUrls: response.presignedUrls,
     };
   }
 
-  async updateProduct(id: string, product: Partial<Product>, token: string): Promise<Product> {
-    const response = await apiClient.withAuth(token).put<ProductBackend>(`/products/${id}`, product);
+  async updateProduct(id: string, product: Partial<Product>, token?: string): Promise<Product> {
+    const client = token ? apiClient.withAuth(token) : apiClient;
+    const response = await client.put<ProductBackend>(`/products/${id}`, product);
     return this.adaptProduct(response);
   }
 
-  async deleteProduct(id: string, token: string): Promise<void> {
-    return apiClient.withAuth(token).delete<void>(`/products/${id}`);
+  async deleteProduct(id: string, token?: string): Promise<void> {
+    const client = token ? apiClient.withAuth(token) : apiClient;
+    return client.delete<void>(`/products/${id}`);
   }
 
   // --- Favorites (require authentication; use the product's numeric id) ---
 
-  async getFavorites(token: string, params: GetProductsParams = {}): Promise<PaginatedResponse<Product>> {
+  async getFavorites(params: GetProductsParams = {}, token?: string): Promise<PaginatedResponse<Product>> {
     const searchParams = new URLSearchParams();
     if (params.page) searchParams.append('page', params.page.toString());
     if (params.limit) searchParams.append('limit', params.limit.toString());
     const query = searchParams.toString();
     const endpoint = `/favorites${query ? `?${query}` : ''}`;
-    const response = await apiClient.withAuth(token).get<BackendPaginatedResponse<ProductBackend>>(endpoint);
+    const client = token ? apiClient.withAuth(token) : apiClient;
+    const response = await client.get<BackendPaginatedResponse<ProductBackend>>(endpoint);
     return {
       data: response.data.map(p => this.adaptProduct(p)),
       pagination: {
@@ -218,12 +254,14 @@ export class ProductsService {
     };
   }
 
-  async addFavorite(productId: number, token: string): Promise<void> {
-    return apiClient.withAuth(token).put<void>(`/favorites/${productId}`);
+  async addFavorite(productId: number, token?: string): Promise<void> {
+    const client = token ? apiClient.withAuth(token) : apiClient;
+    return client.put<void>(`/favorites/${productId}`);
   }
 
-  async removeFavorite(productId: number, token: string): Promise<void> {
-    return apiClient.withAuth(token).delete<void>(`/favorites/${productId}`);
+  async removeFavorite(productId: number, token?: string): Promise<void> {
+    const client = token ? apiClient.withAuth(token) : apiClient;
+    return client.delete<void>(`/favorites/${productId}`);
   }
 }
 

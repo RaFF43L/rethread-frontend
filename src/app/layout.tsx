@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/shared/components/ThemeProvider";
 import { UserSessionProvider } from "@/features/auth/context/UserSessionProvider";
 import { FavoritesProvider } from "@/features/products/context/FavoritesProvider";
+import { ChatWidget } from "@/features/chat/components/ChatWidget";
 import "./globals.css";
 
 const THEME_INIT_SCRIPT = `
@@ -83,7 +84,10 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <UserSessionProvider>
-            <FavoritesProvider>{children}</FavoritesProvider>
+            <FavoritesProvider>
+              {children}
+              <ChatWidget />
+            </FavoritesProvider>
           </UserSessionProvider>
         </ThemeProvider>
       </body>

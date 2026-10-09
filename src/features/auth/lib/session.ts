@@ -1,14 +1,17 @@
-// Read/write the Google login session in non-HttpOnly cookies.
+// Client-side session helpers.
 //
-// Decision (approved by the user): the backend returns tokens in the body and there is
-// NO /auth/me. We store the accessToken (for logout) and the user data
-// (name/email/photo, read from the idToken) in cookies, so the header survives an F5.
-// Do NOT use localStorage (forbidden by the criteria) and never log tokens.
+// Tokens live in HttpOnly cookies set by the server route handlers
+// (/api/auth/callback, /api/backend) and are intentionally UNREADABLE here —
+// that is exactly what protects them from XSS. The only client-readable piece is
+// the user profile (name/email/photo), kept in a non-HttpOnly cookie so the
+// header can render after an F5 without a round-trip. It is not a secret.
+//
+// Authenticated requests do NOT attach a token from JS: they go through the
+// /api/backend proxy, which injects the Bearer from the HttpOnly cookie.
 
 import { env } from '@/shared/lib/env';
 import type { GoogleUser } from '@/shared/types';
 
-const DEFAULT_MAX_AGE_SECONDS = 86400; // 24h
 const USER_COOKIE = `${env.sessionCookieName}_user`;
 
 function readCookie(name: string): string | null {
@@ -24,34 +27,6 @@ function readCookie(name: string): string | null {
   return null;
 }
 
-function writeCookie(name: string, value: string, maxAgeSeconds: number): void {
-  if (typeof document === 'undefined') return;
-
-  const secure = env.isProduction ? '; Secure' : '';
-  document.cookie =
-    `${name}=${encodeURIComponent(value)}` +
-    `; path=/; max-age=${maxAgeSeconds}; SameSite=Lax${secure}`;
-}
-
-function deleteCookie(name: string): void {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
-}
-
-function resolveMaxAge(seconds?: number): number {
-  return seconds && seconds > 0 ? seconds : DEFAULT_MAX_AGE_SECONDS;
-}
-
-// --- Token (accessToken, used on logout) ---
-
-export function getSessionToken(): string | null {
-  return readCookie(env.sessionCookieName);
-}
-
-export function setSessionToken(token: string, maxAgeSeconds?: number): void {
-  writeCookie(env.sessionCookieName, token, resolveMaxAge(maxAgeSeconds));
-}
-
 // --- User (name/email/photo for display) ---
 
 export function getSessionUser(): GoogleUser | null {
@@ -64,13 +39,16 @@ export function getSessionUser(): GoogleUser | null {
   }
 }
 
-export function setSessionUser(user: GoogleUser, maxAgeSeconds?: number): void {
-  writeCookie(USER_COOKIE, JSON.stringify(user), resolveMaxAge(maxAgeSeconds));
+/** Whether there is a local session (used to gate authenticated UI actions). */
+export function hasSession(): boolean {
+  return getSessionUser() !== null;
 }
 
-// --- Full cleanup (logout / invalid session) ---
-
-export function clearSession(): void {
-  deleteCookie(env.sessionCookieName);
-  deleteCookie(USER_COOKIE);
+/**
+ * Clears the client-readable profile cookie. The HttpOnly token cookies are
+ * cleared server-side by the /api/auth/logout route handler.
+ */
+export function clearSessionUser(): void {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${USER_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
 }

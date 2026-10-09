@@ -125,7 +125,8 @@ export interface AuthResponse {
   refreshToken?: string;
 }
 
-// User authenticated via Google (fields returned by the backend at /auth/me).
+// User profile for display. There is no /auth/me: this comes from the `user`
+// field of the callback response and is cached in a non-HttpOnly cookie.
 // All optional: the UI applies a fallback (initials) when something is missing.
 export interface GoogleUser {
   name?: string;
@@ -140,9 +141,11 @@ export interface GoogleLoginInit {
   state: string;
 }
 
-// Response from POST /auth/google/callback. The user data comes in `user`
-// (there is no /auth/me). The accessToken is used on logout; refreshToken is not used
-// on the frontend (no token exchange here).
+// Response from POST /auth/google/callback. NOTE: the backend's Swagger does not
+// document this response body (only a description) — this shape is confirmed with
+// the backend owner, not derived from the spec. The tokens are consumed
+// server-side (route handlers) and stored in HttpOnly cookies; only `user` is
+// exposed to the client. `refreshToken` powers logout (LogoutDto) and refresh.
 export interface GoogleCallbackResponse {
   accessToken?: string;
   idToken?: string;

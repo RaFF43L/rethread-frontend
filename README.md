@@ -1,255 +1,118 @@
-# ReThread Frontend
+# ReThread — Frontend (Brechó Segunda Aura)
 
-Aplicação Next.js para gerenciamento e exibição de produtos de roupas, com área pública para visualização de produtos e área administrativa protegida.
+Loja online de um brechó de moda sustentável. O site mostra um catálogo público de
+peças únicas, permite favoritar, e tem uma área administrativa para
+cadastrar e gerenciar os produtos. Há também um assistente de IA (chat) que ajuda a
+encontrar peças.
 
-## 🚀 Tecnologias
+O backend é um serviço separado (API ReThread); este repositório é apenas o frontend.
 
-- **Next.js 16** - Framework React com App Router
-- **TypeScript** - Tipagem estática
-- **Tailwind CSS** - Estilização
-- **Server-Side Rendering (SSR)** - Para otimização de performance
+## Stack
 
-## 📁 Estrutura do Projeto
+- **Next.js (App Router)** com **React** e **TypeScript**
+- **Tailwind CSS** para estilo, com tokens de tema (claro/escuro)
+- **Radix UI** para primitivos acessíveis (select, dialog)
+- **react-hook-form + zod** para formulários e validação
+- **lucide-react** para ícones
+
+## Por que SSR
+
+O catálogo é a parte pública e principal do site, então renderizar no servidor faz
+sentido por três motivos concretos:
+
+- **SEO e compartilhamento**: as páginas de produto e a home precisam chegar ao
+  navegador (e ao Google) já com o conteúdo no HTML, incluindo metadados OpenGraph.
+- **Primeira pintura rápida**: o visitante vê as peças sem esperar um carregamento no
+  cliente — os dados são buscados no servidor antes de enviar a página.
+- **Cache incremental**: páginas de catálogo usam `revalidate` (ISR), então são
+  servidas de cache e atualizadas periodicamente, sem rebuild.
+
+Na prática, as páginas de leitura (home, produto) são **Server Components** que
+buscam dados direto da API. As partes interativas (chat, favoritos, formulários do
+admin, login) são **Client Components**, marcados com `"use client"`.
+
+## Arquitetura
+
+O código segue uma organização **por feature**: cada domínio do produto vive em sua
+própria pasta, com tudo que precisa junto, em vez de separar por tipo de arquivo. O
+que é usado por mais de uma feature fica em `shared`.
 
 ```
-rethread-frontend/
-├── app/                          # App Router do Next.js
-│   ├── (public)/                 # Rotas públicas (agrupadas)
-│   │   └── produtos/
-│   ├── admin/                    # Rotas administrativas (protegidas)
-│   │   ├── dashboard/
-│   │   └── produtos/
-│   ├── login/                    # Página de login
-│   ├── layout.tsx                # Layout root
-│   └── page.tsx                  # Página inicial
-├── features/                     # Features organizadas por domínio
-│   ├── auth/                     # Feature de autenticação
-│   │   ├── services/
-│   │   ├── hooks/
-│   │   └── types/
-│   ├── produtos/                 # Feature de produtos
-│   │   ├── components/
-│   │   ├── services/
-│   │   └── types/
-│   └── admin/                    # Feature administrativa
-│       ├── components/
-│       ├── services/
-│       └── types/
-├── shared/                       # Código compartilhado
-│   ├── components/               # Componentes reutilizáveis
-│   ├── lib/                      # Configurações (API client, etc)
-│   ├── types/                    # Tipos TypeScript globais
-│   └── utils/                    # Funções utilitárias
-├── proxy.ts                      # Middleware/proxy de autenticação
-└── AI/                           # Documentação para agentes de IA
+src/
+  app/        Rotas (App Router). Define URLs, layout e SSR.
+  features/   Domínios da aplicação (um por pasta).
+  shared/     Código reutilizável entre features.
 ```
 
-## ⚙️ Configuração
+### `src/app` — rotas
 
-### 1. Instalar dependências
+Cada pasta é uma rota. As páginas são Server Components por padrão.
+
+- `/` — home, catálogo de produtos
+- `/product/[id]` — página de um produto
+- `/favorites` — peças favoritadas
+- `/admin` — painel: `dashboard` e CRUD de `products`
+- `/auth/google/callback` — retorno do login com Google
+
+### `src/features` — domínios
+
+Cada feature agrupa o que lhe pertence. Nem toda feature usa todas as subpastas:
+
+- `components/` — componentes de UI daquela feature
+- `services/` — chamadas à API e regras de acesso a dados
+- `context/` — estado compartilhado via React Context (provider + hook)
+- `hooks/` — hooks específicos da feature
+- `lib/` — funções puras/utilitários do domínio
+
+Features atuais:
+
+- `products` — catálogo, card de produto, filtros, favoritos
+- `auth` — login Google, sessão do usuário, autorização por grupo
+- `chat` — assistente de IA via streaming (SSE)
+- `admin` — formulário de cadastro/edição de produto
+
+### `src/shared` — reutilizável
+
+- `components/` — componentes genéricos; `components/ui/` são os primitivos de
+  interface (button, input, select, card...)
+- `lib/` — infraestrutura: `api-client` (cliente HTTP), `env` (variáveis de
+  ambiente), `utils`
+- `hooks/` — hooks genéricos
+- `types/` — tipos TypeScript compartilhados
+- `utils/` — funções utilitárias (formatação de preço, etc.)
+
+## Acesso à API
+
+Toda chamada passa pelo `api-client` (`src/shared/lib/api-client.ts`), que escolhe a
+URL base conforme o ambiente:
+
+- **No navegador**: usa o proxy `/api/backend` (reescrito no `next.config.ts`) para
+  evitar problemas de CORS.
+- **No servidor** (Server Components): chama a API diretamente.
+
+## Como rodar
+
+Pré-requisitos: Node.js e a API do backend rodando.
 
 ```bash
 npm install
+npm run dev     # ambiente de desenvolvimento (http://localhost:3000)
 ```
 
-### 2. Configurar variáveis de ambiente
-
-Crie um arquivo `.env.local` na raiz do projeto (já existe um exemplo):
-
-```env
-# API Backend URL
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
-
-# Configurações de autenticação
-NEXT_PUBLIC_AUTH_COOKIE_NAME=rethread_admin_token
-```
-
-### 3. Executar em desenvolvimento
+Outros scripts:
 
 ```bash
-npm run dev
+npm run build   # build de produção
+npm run start   # serve o build
+npm run lint    # checagem com ESLint
 ```
 
-Acesse: `http://localhost:3000`
+### Variáveis de ambiente
 
-## 🎯 Features
+Defina em um arquivo `.env` na raiz:
 
-### Área Pública
-
-- ✅ Listagem de produtos com paginação
-- ✅ Card de produto com imagem, descrição, cor e preço
-- ✅ Botão para contato via WhatsApp
-- ✅ Design responsivo
-- ✅ SSR para otimização de SEO
-
-### Área Administrativa
-
-- ✅ Dashboard com estatísticas
-- ✅ Listagem de produtos
-- ✅ CRUD de produtos (criar, editar, excluir)
-- ✅ Sistema de autenticação com token
-- ✅ Middleware de proteção de rotas
-- ✅ Interface intuitiva
-
-## 🔐 Autenticação
-
-O sistema utiliza tokens JWT armazenados em cookies para autenticação.
-
-### Login
-
-```
-POST /api/auth/login
-{
-  "email": "admin@rethread.com",
-  "password": "senha123"
-}
-```
-
-### Rotas Protegidas
-
-Todas as rotas `/admin/*` são protegidas pelo middleware e requerem autenticação válida.
-
-## 📡 API Client
-
-A aplicação utiliza um client HTTP centralizado (`shared/lib/api-client.ts`) para comunicação com o backend.
-
-### Exemplo de uso:
-
-```typescript
-// Sem autenticação
-const produtos = await apiClient.get('/produtos');
-
-// Com autenticação
-const token = 'seu_token_aqui';
-const novoProduto = await apiClient.withAuth(token).post('/produtos', data);
-```
-
-## 🔧 Services
-
-### Produtos Service
-
-```typescript
-import { produtosService } from '@/features/produtos/services/produtos.service';
-
-// Listar produtos com paginação
-const { data, pagination } = await produtosService.getProdutos({
-  page: 1,
-  limit: 12,
-  categoria: 'camisetas',
-});
-
-// Buscar produto por ID
-const produto = await produtosService.getProdutoById('123');
-```
-
-### Auth Service
-
-```typescript
-import { authService } from '@/features/auth/services/auth.service';
-
-// Login
-const { user, token } = await authService.login({
-  email: 'admin@example.com',
-  password: 'password',
-});
-
-// Verificar token
-const isValid = await authService.verifyToken(token);
-```
-
-## 🎨 Componentes Principais
-
-### ProdutoCard
-
-Componente para exibição de produto com integração WhatsApp:
-
-```tsx
-<ProdutoCard 
-  produto={produto} 
-  whatsappNumber="5511999999999" 
-/>
-```
-
-### Pagination
-
-Componente de paginação reutilizável:
-
-```tsx
-<Pagination
-  currentPage={1}
-  totalPages={10}
-  basePath="/produtos"
-/>
-```
-
-## 📦 Build para Produção
-
-```bash
-npm run build
-npm run start
-```
-
-## 🛠️ Scripts Disponíveis
-
-- `npm run dev` - Inicia servidor de desenvolvimento
-- `npm run build` - Cria build de produção
-- `npm run start` - Inicia servidor de produção
-- `npm run lint` - Executa linter
-
-## 📝 Padrões de Código
-
-### Organização de Features
-
-Cada feature segue o padrão:
-- `components/` - Componentes específicos da feature
-- `services/` - Lógica de negócio e comunicação com API
-- `hooks/` - Custom hooks React
-- `types/` - Tipos TypeScript específicos
-
-### Nomenclatura
-
-- Componentes: `PascalCase.tsx`
-- Services: `kebab-case.service.ts`
-- Hooks: `useNomeDaFuncionalidade.ts`
-- Tipos: `PascalCase` para interfaces e types
-
-## 🌐 Rotas
-
-### Públicas
-- `/` - Página inicial com lista de produtos
-- `/login` - Página de login administrativa
-
-### Administrativas (protegidas)
-- `/admin/dashboard` - Dashboard com estatísticas
-- `/admin/produtos` - Listagem de produtos
-- `/admin/produtos/new` - Criar novo produto
-- `/admin/produtos/[id]/edit` - Editar produto
-
-## 📱 WhatsApp Integration
-
-Os cards de produto incluem um botão que abre o WhatsApp com mensagem pré-formatada:
-
-```typescript
-// Configurar número no componente
-<ProdutoCard 
-  produto={produto} 
-  whatsappNumber="5511999999999" // Código do país + DDD + número
-/>
-```
-
-## 🚨 Tratamento de Erros
-
-A aplicação possui tratamento centralizado de erros no API client, exibindo mensagens amigáveis para o usuário.
-
-## 🔄 Revalidação SSR
-
-- Páginas públicas: Revalidadas a cada 60 segundos
-- Páginas admin: Revalidadas a cada requisição (sempre atualizadas)
-
-## 📄 Licença
-
-Este projeto é privado e proprietário.
-
----
-
-Desenvolvido com ❤️ para ReThread
+- `NEXT_PUBLIC_API_URL` — URL base da API do backend
+- `NEXT_PUBLIC_APP_URL` — URL pública do site (usada em metadados)
+- `NEXT_PUBLIC_WHATSAPP_NUMBER` — número de WhatsApp para contato/compra
+- `NEXT_PUBLIC_SESSION_COOKIE_NAME` — nome do cookie de sessão
+- `NEXT_PUBLIC_ENABLE_IMAGE_OPTIMIZATION` — liga/desliga a otimização de imagens

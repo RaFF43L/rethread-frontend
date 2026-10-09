@@ -10,19 +10,14 @@ const GENERIC_ERROR = "Não foi possível concluir o login. Tente novamente.";
 
 function CallbackLoading() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-6 bg-background px-5">
-      {/* Same loading as the rest of the app (logo + spinner), adapted to the theme. */}
+    <main className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white px-5">
+      {/* Same loading as the rest of the app: the logo PNG has a white background,
+          so we keep the surface white to let it blend in (no dark variant). */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/logo-segunda-aura.png"
         alt="Segunda Aura"
-        className="block dark:hidden w-40 h-auto animate-pulse motion-reduce:animate-none"
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/logo-segunda-aura-dark.png"
-        alt="Segunda Aura"
-        className="hidden dark:block w-40 h-auto animate-pulse motion-reduce:animate-none"
+        className="w-40 h-auto animate-pulse motion-reduce:animate-none"
       />
       <div className="h-8 w-8 rounded-full border-2 border-foreground border-t-transparent animate-spin motion-reduce:animate-none" />
       <span className="sr-only">Entrando...</span>

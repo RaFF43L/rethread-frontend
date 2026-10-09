@@ -41,13 +41,50 @@ import {
 import { registerProductVideo } from "@/features/products/services/register-video";
 import { productsService } from "@/features/products/services/products.service";
 import { apiClient } from "@/shared/lib/api-client";
-import { getSessionToken } from "@/features/auth/lib/session";
+import { TagInput } from "@/features/admin/components/TagInput";
 
 const CATEGORIES = ["calca", "blusa", "camiseta", "short", "vestido"] as const;
 const SIZES = ["PP", "P", "M", "G", "GG", "XG", "Único"] as const;
+const DEPARTMENTS = ["feminino", "masculino", "unissex"] as const;
+const STRETCH = ["none", "low", "medium", "high"] as const;
+
+const DEPARTMENT_LABELS: Record<(typeof DEPARTMENTS)[number], string> = {
+  feminino: "Feminino",
+  masculino: "Masculino",
+  unissex: "Unissex",
+};
+
+const STRETCH_LABELS: Record<(typeof STRETCH)[number], string> = {
+  none: "Nenhuma",
+  low: "Baixa",
+  medium: "Média",
+  high: "Alta",
+};
+
+// [field, label] — all in centimeters, all optional.
+const MEASUREMENT_FIELDS = [
+  ["chest", "Busto"],
+  ["waist", "Cintura"],
+  ["hip", "Quadril"],
+  ["thigh", "Coxa"],
+  ["shoulder", "Ombro"],
+  ["sleeve", "Manga"],
+  ["length", "Comprimento"],
+  ["rise", "Gancho"],
+  ["inseam", "Entrepernas"],
+  ["hem", "Barra"],
+] as const;
+
+// Empty number inputs come through as NaN (valueAsNumber). Accept NaN here so a
+// blank field is valid; the NaN entries are stripped out in onSubmit. The union
+// keeps the schema's input and output types identical (number | undefined),
+// which the zod resolver requires.
+const optionalCm = z
+  .union([z.number().positive("Deve ser maior que zero"), z.nan()])
+  .optional();
 
 const schema = z.object({
-  marca: z.string().optional(),
+  marca: z.string().min(1, "Informe a marca"),
   cor: z.string().min(1, "Informe a cor"),
   descricao: z.string().min(5, "Descrição muito curta"),
   preco: z
@@ -55,6 +92,31 @@ const schema = z.object({
     .positive("O preço deve ser maior que zero"),
   category: z.enum(CATEGORIES, { error: "Selecione a categoria" }),
   size: z.string().min(1, "Informe o tamanho"),
+  // --- Optional editorial / AI-agent fields ---
+  title: z.string().optional(),
+  department: z.enum(DEPARTMENTS).optional(),
+  era: z.string().optional(),
+  sizeRegion: z.string().optional(),
+  fabric: z.string().optional(),
+  stretch: z.enum(STRETCH).optional(),
+  styleTags: z.array(z.string()).optional(),
+  occasions: z.array(z.string()).optional(),
+  condition: z.string().optional(),
+  notes: z.string().optional(),
+  measurements: z
+    .object({
+      chest: optionalCm,
+      waist: optionalCm,
+      hip: optionalCm,
+      thigh: optionalCm,
+      shoulder: optionalCm,
+      sleeve: optionalCm,
+      length: optionalCm,
+      rise: optionalCm,
+      inseam: optionalCm,
+      hem: optionalCm,
+    })
+    .optional(),
 });
 
 export type FormValues = z.infer<typeof schema>;
@@ -111,7 +173,11 @@ export function ProductForm({
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues,
+    defaultValues: {
+      styleTags: [],
+      occasions: [],
+      ...defaultValues,
+    },
   });
 
   const selectedCategory = watch("category");
@@ -223,15 +289,40 @@ export function ProductForm({
 
     startTransition(async () => {
       try {
-        const token = getSessionToken() ?? undefined;
+        const trimmed = (s?: string) => {
+          const t = s?.trim();
+          return t ? t : undefined;
+        };
+
+        // Drop measurement entries that were left blank; omit the object entirely
+        // when nothing was filled in.
+        const measurements = values.measurements
+          ? Object.fromEntries(
+              Object.entries(values.measurements).filter(
+                ([, v]) => typeof v === "number" && !Number.isNaN(v),
+              ),
+            )
+          : {};
+        const hasMeasurements = Object.keys(measurements).length > 0;
 
         const productPayload = {
-          marca: values.marca || "",
+          marca: values.marca,
           cor: values.cor,
           descricao: values.descricao,
           preco: values.preco,
           category: values.category,
           size: values.size,
+          title: trimmed(values.title),
+          department: values.department,
+          era: trimmed(values.era),
+          sizeRegion: trimmed(values.sizeRegion),
+          fabric: trimmed(values.fabric),
+          stretch: values.stretch,
+          styleTags: values.styleTags?.length ? values.styleTags : undefined,
+          occasions: values.occasions?.length ? values.occasions : undefined,
+          condition: trimmed(values.condition),
+          notes: trimmed(values.notes),
+          measurements: hasMeasurements ? measurements : undefined,
         };
 
         const newImageItems = mediaItems.filter(
@@ -243,15 +334,15 @@ export function ProductForm({
           ...videoFiles,
         ];
 
+        // No token passed: the /api/backend proxy injects the Bearer from the
+        // HttpOnly cookie for these authenticated calls.
         const registerMedia = (productId: string, key: string, file: File) =>
           file.type.startsWith("video/")
-            ? registerProductVideo(productId, key, token)
-            : registerProductImage(productId, key, token);
+            ? registerProductVideo(productId, key)
+            : registerProductImage(productId, key);
 
         if (productNumericId !== undefined && productId) {
-          await apiClient
-            .withAuth(token || "")
-            .put(`/products/${productNumericId}`, productPayload);
+          await apiClient.put(`/products/${productNumericId}`, productPayload);
 
           const keptImageIds = new Set(
             mediaItems
@@ -265,9 +356,7 @@ export function ProductForm({
             .map((img) => img.id)
             .filter((id) => !keptImageIds.has(id));
           for (const imageId of removedImageIds) {
-            await apiClient
-              .withAuth(token || "")
-              .delete(`/products/images/${imageId}`);
+            await apiClient.delete(`/products/images/${imageId}`);
           }
 
           for (const file of uploadFiles) {
@@ -275,7 +364,6 @@ export function ProductForm({
               productId,
               file.name,
               file.type,
-              token,
             );
             await uploadToS3(url, file);
             await registerMedia(productId, key, file);
@@ -291,7 +379,6 @@ export function ProductForm({
                 fileType: file.type,
               })),
             },
-            token || "",
           );
           const presignedUrls = created.presignedUrls ?? [];
           if (presignedUrls.length < uploadFiles.length) {
@@ -461,9 +548,9 @@ export function ProductForm({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            {/* Brand — optional */}
             <FormField
               label="Marca"
+              required
               htmlFor="marca"
               error={errors.marca?.message}
             >
@@ -573,6 +660,205 @@ export function ProductForm({
               )}
             </FormField>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* --- Optional editorial details (sent to the AI agent) --- */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold">
+            Detalhes <span className="font-normal text-muted-foreground">(opcional)</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <FormField
+            label="Título"
+            htmlFor="title"
+            error={errors.title?.message}
+          >
+            <Input
+              id="title"
+              placeholder="ex: Calça jeans reta Levis 501"
+              {...register("title")}
+            />
+            <p className="text-xs text-muted-foreground">
+              Usado pelo agente de IA. Se vazio, o padrão é categoria + marca.
+            </p>
+          </FormField>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Departamento" error={errors.department?.message}>
+              <Controller
+                name="department"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DEPARTMENTS.map((d) => (
+                        <SelectItem key={d} value={d}>
+                          {DEPARTMENT_LABELS[d]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FormField>
+
+            <FormField label="Elasticidade" error={errors.stretch?.message}>
+              <Controller
+                name="stretch"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STRETCH.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {STRETCH_LABELS[s]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Época" htmlFor="era" error={errors.era?.message}>
+              <Input
+                id="era"
+                placeholder="ex: anos 90, Y2K"
+                {...register("era")}
+              />
+            </FormField>
+
+            <FormField
+              label="Região do tamanho"
+              htmlFor="sizeRegion"
+              error={errors.sizeRegion?.message}
+            >
+              <Input
+                id="sizeRegion"
+                placeholder="ex: BR, US, EU"
+                {...register("sizeRegion")}
+              />
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              label="Tecido"
+              htmlFor="fabric"
+              error={errors.fabric?.message}
+            >
+              <Input
+                id="fabric"
+                placeholder="ex: jeans 100% algodão"
+                {...register("fabric")}
+              />
+            </FormField>
+
+            <FormField
+              label="Condição"
+              htmlFor="condition"
+              error={errors.condition?.message}
+            >
+              <Input
+                id="condition"
+                placeholder="ex: ótimo estado"
+                {...register("condition")}
+              />
+            </FormField>
+          </div>
+
+          <FormField label="Estilos" error={errors.styleTags?.message}>
+            <Controller
+              name="styleTags"
+              control={control}
+              render={({ field }) => (
+                <TagInput
+                  value={field.value ?? []}
+                  onChange={field.onChange}
+                  placeholder="ex: vintage, minimalista (Enter p/ adicionar)"
+                />
+              )}
+            />
+          </FormField>
+
+          <FormField label="Ocasiões" error={errors.occasions?.message}>
+            <Controller
+              name="occasions"
+              control={control}
+              render={({ field }) => (
+                <TagInput
+                  value={field.value ?? []}
+                  onChange={field.onChange}
+                  placeholder="ex: trabalho, dia a dia (Enter p/ adicionar)"
+                />
+              )}
+            />
+          </FormField>
+        </CardContent>
+      </Card>
+
+      {/* --- Measurements in centimeters --- */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold">
+            Medidas (cm) <span className="font-normal text-muted-foreground">(opcional)</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+            {MEASUREMENT_FIELDS.map(([name, label]) => (
+              <FormField
+                key={name}
+                label={label}
+                htmlFor={`measurement-${name}`}
+                error={errors.measurements?.[name]?.message}
+              >
+                <Input
+                  id={`measurement-${name}`}
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  inputMode="decimal"
+                  placeholder="cm"
+                  {...register(`measurements.${name}`, { valueAsNumber: true })}
+                />
+              </FormField>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* --- Notes --- */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold">
+            Observações <span className="font-normal text-muted-foreground">(opcional)</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FormField
+            label="Caimento / defeitos"
+            htmlFor="notes"
+            error={errors.notes?.message}
+          >
+            <Textarea
+              id="notes"
+              rows={2}
+              placeholder="ex: Pequeno desgaste na barra."
+              {...register("notes")}
+            />
+          </FormField>
         </CardContent>
       </Card>
 

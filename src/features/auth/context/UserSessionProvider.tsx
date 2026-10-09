@@ -9,13 +9,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { googleAuthService } from "@/features/auth/services/googleAuth.service";
-import {
-  clearSession,
-  getSessionToken,
-  getSessionUser,
-  setSessionToken,
-  setSessionUser,
-} from "@/features/auth/lib/session";
+import { clearSessionUser, getSessionUser } from "@/features/auth/lib/session";
 import type { GoogleUser } from "@/shared/types";
 
 type SessionStatus = "loading" | "authenticated" | "unauthenticated";
@@ -71,31 +65,18 @@ export function UserSessionProvider({
   }, []);
 
   const completeLogin = useCallback(async (code: string) => {
-    const resp = await googleAuthService.callback(code);
-    // User data comes in the callback body (the backend has no /auth/me).
-    const nextUser: GoogleUser = {
-      name: resp.user?.name,
-      email: resp.user?.email,
-      picture: resp.user?.pictureUrl,
-      groups: resp.user?.groups,
-    };
-    const maxAge = resp.expiresIn;
-
-    if (resp.accessToken) setSessionToken(resp.accessToken, maxAge);
-    setSessionUser(nextUser, maxAge);
-
+    // The route handler exchanges the code and stores the HttpOnly tokens +
+    // profile cookie server-side; it returns only the (non-secret) user.
+    const { user: nextUser } = await googleAuthService.callback(code);
     setUser(nextUser);
     setStatus("authenticated");
   }, []);
 
   const logout = useCallback(async () => {
-    const token = getSessionToken();
-    try {
-      await googleAuthService.logout(token ?? undefined);
-    } catch {
-      // A backend failure must not prevent the local logout.
-    }
-    clearSession();
+    // The route handler clears the HttpOnly token cookies and calls the backend.
+    await googleAuthService.logout();
+    // Clear the only client-readable cookie (the profile).
+    clearSessionUser();
     setUser(null);
     setStatus("unauthenticated");
     router.push("/");

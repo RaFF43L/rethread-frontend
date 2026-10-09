@@ -6,14 +6,10 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '150mb',
     },
   },
-  async rewrites() {
-    return [
-      {
-        source: '/api/backend/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/:path*`,
-      },
-    ];
-  },
+  // NOTE: /api/backend/* is intentionally NOT a rewrite. It is served by the
+  // route handler at src/app/api/backend/[...path]/route.ts, which injects the
+  // Bearer token from the HttpOnly session cookie before forwarding to the
+  // backend. A plain rewrite could not read HttpOnly cookies to authenticate.
   images: {
     remotePatterns: [
       {

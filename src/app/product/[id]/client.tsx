@@ -7,6 +7,8 @@ import { FavoriteButton } from "@/shared/components/FavoriteButton";
 import { ProductConditionScale } from "@/features/products/components/ProductConditionScale";
 import { ProductMeasurements } from "@/features/products/components/ProductMeasurements";
 import { useRecentlyViewed } from "@/shared/hooks/useRecentlyViewed";
+// TODO: feature de pagamento (Pix) temporariamente desativada
+// import { PixCheckoutModal } from "@/features/payments/components/PixCheckoutModal";
 import { env } from "@/shared/lib/env";
 import {
   formatPrice,
@@ -49,6 +51,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const [canShare, setCanShare] = useState(false);
   const [pageUrl, setPageUrl] = useState("");
   const [showMobileBar, setShowMobileBar] = useState(false);
+  // const [pixOpen, setPixOpen] = useState(false);
 
   useEffect(() => {
     addRecentlyViewed(product);
@@ -276,15 +279,27 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               style={{ animationDelay: "350ms" }}
             >
               {product.available && whatsappLink ? (
-                <a
-                  href={whatsappLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={WHATSAPP_BUTTON}
-                >
-                  <MessageCircle className="h-[18px] w-[18px]" />
-                  Tenho interesse nesta peça
-                </a>
+                <div className="flex flex-col gap-2.5">
+                  <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={WHATSAPP_BUTTON}
+                  >
+                    <MessageCircle className="h-[18px] w-[18px]" />
+                    Tenho interesse nesta peça
+                  </a>
+                  {/* TODO: pagamento via Pix temporariamente desativado
+                  <button
+                    type="button"
+                    onClick={() => setPixOpen(true)}
+                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-action bg-transparent px-4 text-sm font-medium text-action transition-colors duration-150 ease-out hover:bg-action-soft motion-safe:active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                  >
+                    <QrCode className="h-[18px] w-[18px]" />
+                    Pagar com Pix
+                  </button>
+                  */}
+                </div>
               ) : (
                 <button
                   type="button"
@@ -310,6 +325,17 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           <span className="text-base font-semibold text-foreground">
             {formatPrice(product.price)}
           </span>
+          {/* TODO: pagamento via Pix temporariamente desativado
+          <button
+            type="button"
+            onClick={() => setPixOpen(true)}
+            className="ml-auto inline-flex h-11 items-center justify-center gap-2 rounded-md border border-action bg-transparent px-4 text-sm font-medium text-action transition-colors duration-150 ease-out hover:bg-action-soft motion-safe:active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+            aria-label="Pagar com Pix"
+          >
+            <QrCode className="h-[18px] w-[18px]" />
+            Pix
+          </button>
+          */}
           <a
             href={whatsappLink}
             target="_blank"
@@ -317,10 +343,18 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             className="ml-auto inline-flex h-11 items-center justify-center gap-2 rounded-md bg-action px-4 text-sm font-medium text-action-foreground transition-colors duration-150 ease-out hover:bg-action/90 motion-safe:active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
           >
             <MessageCircle className="h-[18px] w-[18px]" />
-            Tenho interesse nesta peça
+            Interesse
           </a>
         </div>
       )}
+
+      {/* TODO: pagamento via Pix temporariamente desativado
+      <PixCheckoutModal
+        product={product}
+        isOpen={pixOpen}
+        onClose={() => setPixOpen(false)}
+      />
+      */}
     </div>
   );
 }

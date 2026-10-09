@@ -6,8 +6,6 @@ import { Pagination } from "@/shared/components/Pagination";
 import { SiteHeader } from "@/features/products/components/SiteHeader";
 import { CategoryFilters } from "@/features/products/components/CategoryFilters";
 import { FavoritesShortcut } from "@/features/products/components/FavoritesShortcut";
-import { WhatsAppFloat } from "@/features/products/components/WhatsAppFloat";
-import { env } from "@/shared/lib/env";
 import { EmptyState } from "@/shared/components/EmptyState";
 
 const ITEMS_PER_PAGE = 20;
@@ -123,8 +121,6 @@ export default async function HomePage({ searchParams }: PageProps) {
           </div>
         </section>
       </main>
-
-      <WhatsAppFloat number={env.whatsappNumber} />
     </div>
   );
 }
