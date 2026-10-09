@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "shots": "playwright test --project=desktop-light --project=desktop-dark --project=mobile-light --project=mobile-dark",
+    "shots:auth": "playwright test --project=auth-desktop-light --project=auth-desktop-dark --project=auth-mobile-light --project=auth-mobile-dark",
+    "auth:login": "playwright test --project=setup"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -24,6 +27,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

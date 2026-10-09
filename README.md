@@ -1,11 +1,42 @@
-# ReThread — Frontend (Brechó Segunda Aura)
+<div align="center">
 
-Loja online de um brechó de moda sustentável. O site mostra um catálogo público de
-peças únicas, permite favoritar, e tem uma área administrativa para
-cadastrar e gerenciar os produtos. Há também um assistente de IA (chat) que ajuda a
-encontrar peças.
+# 🌿 ReThread — Brechó Segunda Aura
 
-O backend é um serviço separado (API ReThread); este repositório é apenas o frontend.
+**Loja online de um brechó de moda sustentável.**
+
+Catálogo público de peças únicas, favoritos por conta, assistente de IA por chat
+e área administrativa para gerenciar os produtos.
+
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+
+</div>
+
+> O backend é um serviço separado (API ReThread); este repositório é apenas o frontend.
+
+## ✨ Prévia
+
+| Catálogo (claro) | Catálogo (escuro) |
+| --- | --- |
+| ![Home claro](docs/screenshots/light/desktop/01-home.png) | ![Home escuro](docs/screenshots/dark/desktop/01-home.png) |
+
+| Detalhe do produto | Favoritos (logado) |
+| --- | --- |
+| ![Produto](docs/screenshots/light/mobile/02-product-full.png) | ![Favoritos](docs/screenshots/light/mobile/04-favorites-logged-in.png) |
+
+> 📸 Galeria completa (claro/escuro × desktop/mobile) em **[docs/USABILIDADE.md](docs/USABILIDADE.md)**.
+
+## 🚀 Funcionalidades
+
+- **Catálogo** de produtos com filtros por categoria e paginação.
+- **Favoritos** sincronizados com a conta do usuário.
+- **Login com Google** (OAuth via backend) com sessão em cookies HttpOnly.
+- **Assistente de IA** em chat flutuante (respostas via streaming SSE).
+- **Compra via WhatsApp** com mensagem pré-preenchida.
+- **Painel administrativo** para gestão de produtos (restrito ao grupo `@admin`).
+- **Tema claro/escuro** e layout responsivo (desktop e mobile).
 
 ## Stack
 
@@ -81,14 +112,19 @@ Features atuais:
 - `types/` — tipos TypeScript compartilhados
 - `utils/` — funções utilitárias (formatação de preço, etc.)
 
-## Acesso à API
+## Acesso à API e sessão
 
-Toda chamada passa pelo `api-client` (`src/shared/lib/api-client.ts`), que escolhe a
-URL base conforme o ambiente:
+As chamadas escolhem a URL base conforme o ambiente:
 
-- **No navegador**: usa o proxy `/api/backend` (reescrito no `next.config.ts`) para
-  evitar problemas de CORS.
-- **No servidor** (Server Components): chama a API diretamente.
+- **No navegador**: passam pelo proxy `/api/backend`, implementado como **route
+  handler** em `src/app/api/backend/[...path]/route.ts`. Ele injeta o `Bearer` do
+  cookie de sessão **HttpOnly** antes de encaminhar ao backend, faz streaming (chat
+  SSE) e refresh transparente no `401`. O cliente nunca envia `Authorization`.
+- **No servidor** (Server Components / Server Actions): chamam a API diretamente.
+
+> **Sessão anti-XSS**: os tokens (access/refresh) vivem em cookies HttpOnly e nunca
+> são lidos pelo JS do cliente. Só o perfil do usuário (nome/foto) fica num cookie
+> legível, para renderizar o header sem um round-trip.
 
 ## Como rodar
 
@@ -102,10 +138,17 @@ npm run dev     # ambiente de desenvolvimento (http://localhost:3000)
 Outros scripts:
 
 ```bash
-npm run build   # build de produção
-npm run start   # serve o build
-npm run lint    # checagem com ESLint
+npm run build       # build de produção
+npm run start       # serve o build
+npm run lint        # checagem com ESLint
+
+npm run shots       # gera os screenshots públicos (claro + escuro, desktop + mobile)
+npm run auth:login  # captura uma sessão real (login manual) para os prints logados
+npm run shots:auth  # gera os screenshots dos fluxos autenticados
 ```
+
+Os prints da documentação são gerados via **Playwright** e versionados em
+`docs/screenshots/`. Detalhes em **[docs/USABILIDADE.md](docs/USABILIDADE.md)**.
 
 ### Variáveis de ambiente
 

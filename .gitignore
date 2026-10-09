@@ -11,7 +11,14 @@
 !.yarn/versions
 
 # testing
-/coverage 
+/coverage
+
+# playwright (artifacts; the prints in docs/screenshots ARE committed)
+/test-results/
+/playwright-report/
+/playwright/.cache/
+# captured real session (contains tokens) — NEVER commit
+/e2e/.auth/
 
 #ai 
 /ai
