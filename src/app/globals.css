@@ -153,6 +153,19 @@
   50% { transform: scale(1.04); opacity: 1; }
 }
 
+/* Site header neon (applied only via motion-safe) */
+@keyframes auraTwinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.6); }
+  50% { opacity: 0.9; transform: scale(1.3); }
+}
+
+@keyframes neonSweep {
+  0%, 60% { transform: translateX(0) skewX(-12deg); opacity: 0; }
+  65% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { transform: translateX(450%) skewX(-12deg); opacity: 0; }
+}
+
 /* Light sweep across text / lines (needs background-size: 200%) */
 @keyframes shimmerX {
   from { background-position: 200% 0; }

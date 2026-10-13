@@ -3,10 +3,12 @@ import Image from "next/image";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import { HeaderUserMenu } from "@/features/products/components/HeaderUserMenu";
 import { HeaderFavorites } from "@/features/products/components/HeaderFavorites";
+import { SiteHeaderGlow } from "@/features/products/components/SiteHeaderGlow";
 
 export function SiteHeader() {
   return (
-    <header className="w-full bg-surface border-b border-line">
+    <header className="relative isolate w-full bg-surface">
+      <SiteHeaderGlow />
       <div className="px-4 md:px-14">
         <div className="max-w-[1360px] mx-auto flex items-center justify-between py-3 md:py-4">
           <Link
