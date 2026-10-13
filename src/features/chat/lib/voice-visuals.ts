@@ -10,13 +10,20 @@ export interface VoiceVisuals {
 
 /** Maps the call state to what the voice UI shows. */
 export function getVoiceVisuals(voice: UseVoiceChat): VoiceVisuals {
-  const { status, isMuted, agentState, isUserTurnPending } = voice;
+  const { status, isMuted, agentState, isUserTurnPending, isAwaitingGreeting } = voice;
 
   if (status === "connecting") {
     return { mode: "connecting", label: "Conectando...", getLevel: voice.getMicLevel };
   }
   if (agentState === "speaking") {
-    return { mode: "speaking", label: "Assistente falando", getLevel: voice.getAgentLevel };
+    return {
+      mode: "speaking",
+      label: isAwaitingGreeting ? "Assistente se apresentando" : "Assistente falando",
+      getLevel: voice.getAgentLevel,
+    };
+  }
+  if (isAwaitingGreeting) {
+    return { mode: "connecting", label: "Chamando a assistente...", getLevel: voice.getAgentLevel };
   }
   if (agentState === "thinking") {
     return { mode: "thinking", label: "Pensando...", getLevel: voice.getAgentLevel };

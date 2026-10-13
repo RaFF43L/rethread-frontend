@@ -1,14 +1,7 @@
 // Streaming client for the AI chat.
-//
-// We cannot use the native EventSource because:
-//   1. the endpoint is POST (the user message travels in the body), and
-//   2. we must send `Authorization: Bearer <token>`, which EventSource forbids.
-//
-// Instead we POST with fetch and read the `text/event-stream` body as a
-// ReadableStream, parsing the SSE frames by hand. Requests go through the
-// Next.js proxy (/api/backend) in the browser to avoid CORS.
 
 import { ChatEventType, ChatStreamEvent } from "@/features/chat/types";
+import { notifySessionExpired } from "@/shared/lib/session-events";
 
 const CHAT_ENDPOINT = "/api/backend/ai/chat";
 
@@ -61,6 +54,7 @@ export async function sendChatMessage(
   });
 
   if (!response.ok || !response.body) {
+    if (response.status === 401) notifySessionExpired();
     let detail = `Erro ${response.status}`;
     try {
       const body = await response.json();

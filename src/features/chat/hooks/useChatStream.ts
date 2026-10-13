@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { hasSession } from "@/features/auth/lib/session";
+import { notifySessionExpired } from "@/shared/lib/session-events";
 import { sendChatMessage } from "@/features/chat/services/chat.service";
 import type {
   ChatMessage,
@@ -138,6 +139,8 @@ export function useChatStream(): UseChatStream {
       // We can only check for the (readable) profile cookie; the actual token is
       // HttpOnly and injected by the proxy.
       if (!hasSession()) {
+        // The profile cookie may have just expired: let the header catch up.
+        notifySessionExpired();
         setError("Entre na sua conta para usar o assistente.");
         return;
       }

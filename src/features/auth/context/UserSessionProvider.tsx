@@ -10,6 +10,7 @@ import {
 import { useRouter } from "next/navigation";
 import { googleAuthService } from "@/features/auth/services/googleAuth.service";
 import { clearSessionUser, getSessionUser } from "@/features/auth/lib/session";
+import { onSessionExpired } from "@/shared/lib/session-events";
 import type { GoogleUser } from "@/shared/types";
 
 type SessionStatus = "loading" | "authenticated" | "unauthenticated";
@@ -32,6 +33,8 @@ const UserSessionContext = createContext<UserSessionContextValue | null>(null);
 const AUTH_STATE_KEY = "auth_state";
 const INIT_ERROR_MESSAGE =
   "Não foi possível iniciar o login. Tente novamente.";
+/** How often the profile cookie is re-read to notice an expired session. */
+const SESSION_CHECK_INTERVAL_MS = 30_000;
 
 export function UserSessionProvider({
   children,
@@ -43,13 +46,41 @@ export function UserSessionProvider({
   const [initError, setInitError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Loads the session on mount: reads the cookies (there is no /auth/me to query).
+  // Loads the session on mount and keeps it in sync: reads the cookies (there
+  // is no /auth/me to query).
   useEffect(() => {
-    const savedUser = getSessionUser();
+    // The profile cookie has the session's max-age, so it vanishes on its own
+    // when the session expires; re-reading it catches that (and logins/logouts
+    // made in another tab) without a reload.
+    const syncFromCookie = () => {
+      const savedUser = getSessionUser();
+      setUser((current) =>
+        current?.email === savedUser?.email ? current : savedUser,
+      );
+      setStatus(savedUser ? "authenticated" : "unauthenticated");
+    };
+    // Something got a 401 from the backend: the session is over.
+    const expire = () => {
+      clearSessionUser();
+      setUser(null);
+      setStatus("unauthenticated");
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") syncFromCookie();
+    };
+
     // Restores only from external state (cookie), available only on the client.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (savedUser) setUser(savedUser);
-    setStatus(savedUser ? "authenticated" : "unauthenticated");
+    syncFromCookie();
+    const interval = setInterval(syncFromCookie, SESSION_CHECK_INTERVAL_MS);
+    window.addEventListener("focus", syncFromCookie);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    const unsubscribe = onSessionExpired(expire);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", syncFromCookie);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      unsubscribe();
+    };
   }, []);
 
   const startLogin = useCallback(async () => {

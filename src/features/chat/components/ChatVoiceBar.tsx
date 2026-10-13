@@ -19,7 +19,7 @@ function CallTimer({ since }: { since: number }) {
 
 /** Call dock shown above the composer while a voice call is active (or failed). */
 export function ChatVoiceBar({ voice }: { voice: UseVoiceChat }) {
-  const { status, isMuted, error, connectedAt, stop, toggleMute } = voice;
+  const { status, isMuted, isAwaitingGreeting, error, connectedAt, stop, toggleMute } = voice;
 
   if (status === "idle" && !error) return null;
 
@@ -90,10 +90,16 @@ export function ChatVoiceBar({ voice }: { voice: UseVoiceChat }) {
         <button
           type="button"
           onClick={() => void toggleMute()}
-          disabled={isConnecting}
+          disabled={isConnecting || isAwaitingGreeting}
           aria-pressed={isMuted}
           aria-label={isMuted ? "Ligar microfone" : "Desligar microfone"}
-          title={isMuted ? "Ligar microfone" : "Desligar microfone"}
+          title={
+            isAwaitingGreeting
+              ? "O microfone abre quando a assistente terminar de se apresentar"
+              : isMuted
+                ? "Ligar microfone"
+                : "Desligar microfone"
+          }
           className={cn(
             "inline-flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action disabled:cursor-not-allowed disabled:opacity-40 motion-safe:active:scale-95",
             isMuted

@@ -6,6 +6,7 @@
 // Next.js proxy (/api/backend), which injects the Bearer from the cookie.
 
 import type { ChatProductItem } from "@/features/chat/types";
+import { notifySessionExpired } from "@/shared/lib/session-events";
 
 const VOICE_TOKEN_ENDPOINT = "/api/backend/ai/voice/token";
 const ITEMS_ENDPOINT = "/api/backend/ai/items";
@@ -48,6 +49,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   });
 
   if (!response.ok) {
+    if (response.status === 401) notifySessionExpired();
     let detail = `Erro ${response.status}`;
     try {
       const body = await response.json();

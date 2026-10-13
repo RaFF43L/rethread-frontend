@@ -5,17 +5,20 @@
 // from the HttpOnly cookie. This is what lets the access token stay HttpOnly:
 // client JS never sees it, so XSS cannot steal it.
 //
-// On a 401 it transparently tries POST /auth/refresh once (email + refreshToken),
-// rotates the cookies, and replays the request. Responses are streamed back
-// as-is, so SSE endpoints (the AI chat) keep working.
+// `src/proxy.ts` already renewed an expired access cookie before this runs; on
+// a 401 (token revoked, or expired in between) it tries POST /auth/google/refresh
+// once, rotates the cookies, and replays the request. Responses are streamed
+// back as-is, so SSE endpoints (the AI chat) keep working.
 
 import type { NextRequest } from 'next/server';
 import { env } from '@/shared/lib/env';
 import {
+  clearAuthCookies,
   readAccessToken,
   readRefreshToken,
-  readSessionEmail,
+  refreshGoogleSession,
   writeAuthCookies,
+  type RefreshResult,
 } from '@/features/auth/lib/auth-cookies';
 
 export const dynamic = 'force-dynamic';
@@ -36,39 +39,14 @@ const STRIP_RESPONSE_HEADERS = new Set([
   'transfer-encoding',
 ]);
 
-interface RefreshResponse {
-  accessToken?: string;
-  refreshToken?: string;
-  expiresIn?: number;
-}
-
-/** Exchanges the refresh token for a new access token. Returns the new one or null. */
-async function tryRefresh(): Promise<string | null> {
+/** Exchanges the refresh token for a new access token, rotating the cookies. */
+async function tryRefresh(): Promise<RefreshResult> {
   const refreshToken = await readRefreshToken();
-  const email = await readSessionEmail();
-  if (!refreshToken || !email) return null;
+  if (!refreshToken) return { status: 'expired' };
 
-  let res: Response;
-  try {
-    res = await fetch(`${env.apiUrl}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, refreshToken }),
-    });
-  } catch {
-    return null;
-  }
-  if (!res.ok) return null;
-
-  const data = (await res.json().catch(() => null)) as RefreshResponse | null;
-  if (!data?.accessToken) return null;
-
-  await writeAuthCookies({
-    accessToken: data.accessToken,
-    refreshToken: data.refreshToken ?? refreshToken,
-    expiresIn: data.expiresIn,
-  });
-  return data.accessToken;
+  const result = await refreshGoogleSession(refreshToken);
+  if (result.status === 'refreshed') await writeAuthCookies(result.tokens);
+  return result;
 }
 
 async function proxy(req: NextRequest, path: string[]): Promise<Response> {
@@ -95,8 +73,16 @@ async function proxy(req: NextRequest, path: string[]): Promise<Response> {
   let backendRes = await send(await readAccessToken());
 
   if (backendRes.status === 401) {
-    const refreshed = await tryRefresh();
-    if (refreshed) backendRes = await send(refreshed);
+    const refresh = await tryRefresh();
+    if (refresh.status === 'refreshed') {
+      backendRes = await send(refresh.tokens.accessToken ?? null);
+    }
+    // Still rejected: the session is over. Drop every cookie (the readable
+    // profile one included) so the client stops showing a logged-in user.
+    // A refresh that merely failed to reach the backend keeps the session.
+    if (backendRes.status === 401 && refresh.status !== 'unavailable') {
+      await clearAuthCookies();
+    }
   }
 
   const resHeaders = new Headers();

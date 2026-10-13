@@ -14,25 +14,23 @@ import {
   type TextStreamReader,
 } from "livekit-client";
 import { hasSession } from "@/features/auth/lib/session";
+import { notifySessionExpired } from "@/shared/lib/session-events";
 import type { ChatSessionBridge } from "@/features/chat/hooks/useChatStream";
 import {
   requestVoiceToken,
   resolveChatItems,
   VoiceRequestError,
 } from "@/features/chat/services/voice.service";
-import type { ChatMessageRole } from "@/features/chat/types";
+import type { ChatMessageRole, ChatProductItem } from "@/features/chat/types";
 
 /** Live transcription of both sides, published by LiveKit agents. */
 const TRANSCRIPTION_TOPIC = "lk.transcription";
 /** `{"skus": [...]}` published by our agent after a reply that recommends products. */
 const SKUS_TOPIC = "rethread.skus";
-/** Participant attribute LiveKit agents use to publish their state. */
 const AGENT_STATE_ATTRIBUTE = "lk.agent.state";
-/**
- * How long the "listening" placeholder survives after the user stops speaking
- * without any transcript arriving (e.g. noise the STT discarded).
- */
 const PENDING_TURN_TIMEOUT_MS = 5000;
+const GREETING_MAX_WAIT_MS = 15000;
+const DEBUG_STORAGE_KEY = "rethread:voice-debug";
 /** Wider decibel range than LiveKit's default, which saturates on speech. */
 const ANALYSER_OPTIONS = {
   fftSize: 512,
@@ -67,6 +65,8 @@ export interface UseVoiceChat {
    * up in the chat, so the UI can hold a "listening" placeholder meanwhile.
    */
   isUserTurnPending: boolean;
+  /** Connected, but the mic stays muted until the agent finishes its greeting. */
+  isAwaitingGreeting: boolean;
   agentState: VoiceAgentState;
   /**
    * Instant microphone volume in [0, 1]. Meant to be polled every animation
@@ -114,6 +114,19 @@ async function fetchVoiceToken(bridge: ChatSessionBridge, itemId?: string) {
   }
 }
 
+function isDebugEnabled(): boolean {
+  if (process.env.NODE_ENV !== "production") return true;
+  try {
+    return localStorage.getItem(DEBUG_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function debug(...args: unknown[]) {
+  if (isDebugEnabled()) console.debug("[voice]", ...args);
+}
+
 function parseSkus(raw: string): string[] {
   try {
     const parsed = JSON.parse(raw) as { skus?: unknown };
@@ -145,7 +158,10 @@ export function useVoiceChat(bridge: ChatSessionBridge): UseVoiceChat {
   const [isMuted, setIsMuted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isUserTurnPending, setIsUserTurnPending] = useState(false);
+  const [isAwaitingGreeting, setIsAwaitingGreeting] = useState(false);
   const [agentState, setAgentState] = useState<VoiceAgentState>(null);
+  // Read from event handlers, which would otherwise see a stale render's value.
+  const agentStateRef = useRef<VoiceAgentState>(null);
   const [connectedAt, setConnectedAt] = useState<number | null>(null);
   // The current call. Cleared before disconnecting, so any async work that
   // finds a different room here knows its call was cancelled.
@@ -158,6 +174,36 @@ export function useVoiceChat(bridge: ChatSessionBridge): UseVoiceChat {
   // Bumped on every chat reset, so late transcripts/products from a previous
   // conversation never land in the new one.
   const conversationRef = useRef(0);
+  const micTrackRef = useRef<LocalAudioTrack | null>(null);
+  // Greeting gate: "waiting" for the agent to start talking, then "speaking"
+  // until it goes back to listening; null once the mic is open.
+  const greetingRef = useRef<"waiting" | "speaking" | null>(null);
+  const greetingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The agent publishes SKUs as soon as its pipeline finishes, before the reply
+  // is spoken (and transcribed); the cards wait here until the reply is over.
+  const pendingItemsRef = useRef<{
+    conversation: number;
+    items: ChatProductItem[];
+  } | null>(null);
+
+  const flushPendingItems = useCallback(() => {
+    const pending = pendingItemsRef.current;
+    pendingItemsRef.current = null;
+    if (!pending || pending.conversation !== conversationRef.current) return;
+    debug("attaching", pending.items.length, "item(s) to the reply");
+    bridge.attachItems(pending.items);
+  }, [bridge]);
+
+  /** Opens the mic once the agent finished its greeting (or we gave up waiting). */
+  const finishGreeting = useCallback((reason: string) => {
+    if (greetingTimeoutRef.current) clearTimeout(greetingTimeoutRef.current);
+    greetingTimeoutRef.current = null;
+    if (!greetingRef.current) return;
+    greetingRef.current = null;
+    debug("greeting finished:", reason, "- opening the mic");
+    setIsAwaitingGreeting(false);
+    void micTrackRef.current?.unmute();
+  }, []);
 
   const clearPendingTimeout = useCallback(() => {
     if (pendingTimeoutRef.current) clearTimeout(pendingTimeoutRef.current);
@@ -178,10 +224,18 @@ export function useVoiceChat(bridge: ChatSessionBridge): UseVoiceChat {
     agentAnalysersRef.current.forEach((analyser) => void analyser.cleanup());
     agentAnalysersRef.current.clear();
     resolveUserTurn();
+    // Cards of a reply cut short by the hang-up still belong to it.
+    flushPendingItems();
+    if (greetingTimeoutRef.current) clearTimeout(greetingTimeoutRef.current);
+    greetingTimeoutRef.current = null;
+    greetingRef.current = null;
+    micTrackRef.current = null;
+    setIsAwaitingGreeting(false);
+    agentStateRef.current = null;
     setAgentState(null);
     setIsMuted(false);
     setConnectedAt(null);
-  }, [resolveUserTurn]);
+  }, [flushPendingItems, resolveUserTurn]);
 
   const stop = useCallback(() => {
     const room = roomRef.current;
@@ -254,12 +308,30 @@ export function useVoiceChat(bridge: ChatSessionBridge): UseVoiceChat {
     async (reader: TextStreamReader) => {
       const conversation = conversationRef.current;
       try {
-        const skus = parseSkus(await reader.readAll());
+        const raw = await reader.readAll();
+        const skus = parseSkus(raw);
+        debug("SKUs received from the agent:", raw);
         if (skus.length === 0) return;
         const items = await resolveChatItems(skus);
-        if (conversationRef.current !== conversation) return;
-        bridge.attachItems(items);
-      } catch {
+        const found = new Set(items.map((item) => item.codigoIdentificacao));
+        const missing = skus.filter((sku) => !found.has(sku));
+        debug(`/ai/items resolved ${items.length}/${skus.length}`, missing.length ? { missing } : "");
+        if (conversationRef.current !== conversation || items.length === 0) return;
+
+        const agentBusy =
+          agentStateRef.current === "thinking" || agentStateRef.current === "speaking";
+        if (!agentBusy) {
+          bridge.attachItems(items);
+          return;
+        }
+        const pending = pendingItemsRef.current;
+        pendingItemsRef.current = {
+          conversation,
+          items:
+            pending?.conversation === conversation ? [...pending.items, ...items] : items,
+        };
+      } catch (err) {
+        debug("failed to handle SKUs:", err);
         if (conversationRef.current !== conversation) return;
         setError("Não foi possível carregar as peças recomendadas.");
       }
@@ -273,6 +345,7 @@ export function useVoiceChat(bridge: ChatSessionBridge): UseVoiceChat {
 
       // Same gate as the text chat: never hit the backend anonymously.
       if (!hasSession()) {
+        notifySessionExpired();
         setError("Entre na sua conta para conversar por voz.");
         setStatus("error");
         return;
@@ -287,10 +360,20 @@ export function useVoiceChat(bridge: ChatSessionBridge): UseVoiceChat {
 
       const syncAgentState = (participant: Participant) => {
         const state = readAgentState(participant);
-        if (state === undefined) return;
+        if (state === undefined || state === agentStateRef.current) return;
+        debug("agent state:", agentStateRef.current, "→", state);
+        agentStateRef.current = state;
         setAgentState(state);
         // The agent took the turn, so whatever the user said has been heard.
         if (state === "thinking" || state === "speaking") resolveUserTurn();
+        if (state === "speaking" && greetingRef.current === "waiting") {
+          greetingRef.current = "speaking";
+        }
+        if (state === "listening") {
+          if (greetingRef.current === "speaking") finishGreeting("agent done talking");
+          // The reply has been fully spoken (and transcribed): its cards go under it.
+          flushPendingItems();
+        }
       };
 
       try {
@@ -309,6 +392,11 @@ export function useVoiceChat(bridge: ChatSessionBridge): UseVoiceChat {
         });
         room.registerTextStreamHandler(SKUS_TOPIC, (reader) => {
           void handleSkus(reader);
+        });
+        // Diagnostics only: SKUs sent as raw data packets would never reach the
+        // text stream handler above.
+        room.on(RoomEvent.DataReceived, (_payload, _participant, _kind, topic) => {
+          debug("data packet received (ignored), topic:", topic);
         });
 
         room
@@ -359,10 +447,21 @@ export function useVoiceChat(bridge: ChatSessionBridge): UseVoiceChat {
           }
         });
 
+        // Armed before connecting: the agent greets as soon as we join.
+        greetingRef.current = "waiting";
+        setIsAwaitingGreeting(true);
+        greetingTimeoutRef.current = setTimeout(
+          () => finishGreeting("timeout"),
+          GREETING_MAX_WAIT_MS,
+        );
+
         await room.connect(url, token);
         if (roomRef.current !== room) return;
+        debug("connected to room", room.name);
         // The agent may have joined before us.
         room.remoteParticipants.forEach(syncAgentState);
+        // Published right away (the permission prompt belongs to this click),
+        // but muted while the agent introduces itself.
         await room.localParticipant.setMicrophoneEnabled(true);
         if (roomRef.current !== room) return;
 
@@ -370,6 +469,9 @@ export function useVoiceChat(bridge: ChatSessionBridge): UseVoiceChat {
           Track.Source.Microphone,
         )?.audioTrack as LocalAudioTrack | undefined;
         if (micTrack) {
+          micTrackRef.current = micTrack;
+          if (greetingRef.current) await micTrack.mute();
+          if (roomRef.current !== room) return;
           analyserRef.current = createAudioAnalyser(micTrack, ANALYSER_OPTIONS);
         }
 
@@ -389,6 +491,8 @@ export function useVoiceChat(bridge: ChatSessionBridge): UseVoiceChat {
     [
       bridge,
       clearPendingTimeout,
+      finishGreeting,
+      flushPendingItems,
       handleSkus,
       readTranscription,
       releaseCall,
@@ -398,7 +502,8 @@ export function useVoiceChat(bridge: ChatSessionBridge): UseVoiceChat {
 
   const toggleMute = useCallback(async () => {
     const room = roomRef.current;
-    if (!room) return;
+    // The mic is managed by the greeting gate until the agent is done.
+    if (!room || greetingRef.current) return;
     const enabled = room.localParticipant.isMicrophoneEnabled;
     try {
       await room.localParticipant.setMicrophoneEnabled(!enabled);
@@ -413,6 +518,7 @@ export function useVoiceChat(bridge: ChatSessionBridge): UseVoiceChat {
     isMuted,
     error,
     isUserTurnPending,
+    isAwaitingGreeting,
     agentState,
     getMicLevel,
     getAgentLevel,

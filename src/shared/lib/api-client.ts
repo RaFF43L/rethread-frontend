@@ -2,6 +2,7 @@
 
 import { ApiError } from '@/shared/types';
 import { env } from '@/shared/lib/env';
+import { notifySessionExpired } from '@/shared/lib/session-events';
 
 function getBaseUrl(): string {
   if (typeof window !== 'undefined') {
@@ -21,6 +22,8 @@ class ApiClient {
 
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
+      // The proxy already tried a refresh and cleared the cookies: log out the UI.
+      if (response.status === 401) notifySessionExpired();
       const error: ApiError = await response.json().catch(() => ({
         message: 'Erro ao processar resposta',
         statusCode: response.status,
