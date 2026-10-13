@@ -26,11 +26,8 @@ const KNOWN_EVENTS: ReadonlySet<string> = new Set<ChatEventType>([
 
 export interface SendChatParams {
   message: string;
-  /** Sent as `true` on the first message so the backend creates a session. */
   firstInteraction?: boolean;
-  /** Session id from the `session` event; sent on every later message. */
   sessionId?: string;
-  /** Aborts the in-flight request (e.g. a "stop" button or unmount). */
   signal?: AbortSignal;
 }
 

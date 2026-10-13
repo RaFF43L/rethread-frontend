@@ -1,10 +1,12 @@
 "use client";
 
-import { AlertTriangle, Sparkles, UserRound } from "lucide-react";
+import { AlertTriangle, AudioLines, Sparkles, UserRound } from "lucide-react";
+import { cn } from "@/shared/lib/utils";
 import type { ChatMessage } from "@/features/chat/types";
 import { ChatProductCard } from "@/features/chat/components/ChatProductCard";
 import { useUserSession } from "@/features/auth/context/UserSessionProvider";
 import { useTypewriter } from "@/features/chat/hooks/useTypewriter";
+import { VoiceLevelMeter } from "@/features/chat/components/VoiceLevelMeter";
 
 function getInitials(name?: string, email?: string): string {
   const source = (name || email || "").trim();
@@ -67,7 +69,7 @@ function AssistantMessage({ message }: { message: ChatMessage }) {
   const isTyping = text.length < message.content.length;
 
   return (
-    <div className="flex justify-start gap-2">
+    <div className="flex justify-start gap-2 motion-safe:animate-[blockRise_200ms_ease-out]">
       <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-action-soft text-action">
         <Sparkles className="h-4 w-4" />
       </span>
@@ -91,6 +93,10 @@ function AssistantMessage({ message }: { message: ChatMessage }) {
           </div>
         )}
 
+        {message.via === "voice" && text && (
+          <VoiceBadge className="block text-muted-foreground" />
+        )}
+
         {isError && message.error && (
           <p className="mt-1 flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -102,12 +108,52 @@ function AssistantMessage({ message }: { message: ChatMessage }) {
   );
 }
 
+/**
+ * Placeholder for the user's turn in a voice call: shown while they speak,
+ * until the transcript arrives. The bars follow the microphone volume.
+ */
+export function ChatListeningBubble({ getLevel }: { getLevel: () => number }) {
+  return (
+    <div className="flex justify-end gap-2 motion-safe:animate-[blockRise_200ms_ease-out]">
+      <div className="relative flex items-center gap-2.5 overflow-hidden rounded-lg rounded-br-sm bg-action px-3.5 py-2.5 text-sm text-action-foreground shadow-[0_6px_18px_-8px_var(--aura-1)]">
+        {/* Light sweep over the bubble while the user speaks. */}
+        <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(100deg,transparent_30%,rgba(255,255,255,0.22)_50%,transparent_70%)] bg-[length:200%_100%] motion-safe:animate-[shimmerX_1.8s_linear_infinite]" />
+        <VoiceLevelMeter getLevel={getLevel} className="relative h-5" />
+        <span className="relative font-medium opacity-95">Ouvindo...</span>
+      </div>
+      <UserAvatar />
+    </div>
+  );
+}
+
+/** Marks a message that came from the voice call. */
+function VoiceBadge({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "mt-1 inline-flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-wider",
+        className,
+      )}
+    >
+      <AudioLines className="h-3 w-3" />
+      Voz
+    </span>
+  );
+}
+
 export function ChatMessageItem({ message }: { message: ChatMessage }) {
   if (message.role === "user") {
+    const isLive = message.via === "voice" && message.status === "streaming";
     return (
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-2 motion-safe:animate-[blockRise_200ms_ease-out]">
         <div className="max-w-[82%] rounded-lg rounded-br-sm bg-action px-3.5 py-2.5 text-sm text-action-foreground">
-          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+          <p className={cn("whitespace-pre-wrap break-words", isLive && "opacity-80")}>
+            {message.content}
+            {isLive && (
+              <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 animate-pulse bg-action-foreground align-middle" />
+            )}
+          </p>
+          {message.via === "voice" && <VoiceBadge className="opacity-70" />}
         </div>
         <UserAvatar />
       </div>

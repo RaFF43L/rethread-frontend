@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
-import { Send, Square } from "lucide-react";
+import { Mic, Send, Square } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
 const MAX_TEXTAREA_HEIGHT = 160;
@@ -10,6 +10,8 @@ interface ChatComposerProps {
   isStreaming: boolean;
   onSend: (text: string) => void;
   onStop: () => void;
+  /** Starts a voice call; the mic button is hidden when omitted. */
+  onStartVoice?: () => void;
   disabled?: boolean;
 }
 
@@ -17,6 +19,7 @@ export function ChatComposer({
   isStreaming,
   onSend,
   onStop,
+  onStartVoice,
   disabled,
 }: ChatComposerProps) {
   const [value, setValue] = useState("");
@@ -61,6 +64,19 @@ export function ChatComposer({
             "disabled:cursor-not-allowed disabled:opacity-60",
           )}
         />
+
+        {onStartVoice && (
+          <button
+            type="button"
+            onClick={onStartVoice}
+            disabled={disabled}
+            aria-label="Conversar por voz"
+            title="Conversar por voz"
+            className="group inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-line text-foreground transition-all duration-200 hover:border-[var(--aura-2)] hover:bg-action-soft hover:text-action hover:shadow-[0_0_14px_-3px_var(--aura-2)] motion-safe:active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Mic className="h-[18px] w-[18px] transition-transform duration-200 group-hover:scale-110" />
+          </button>
+        )}
 
         {isStreaming ? (
           <button

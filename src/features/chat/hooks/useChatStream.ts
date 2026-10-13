@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { hasSession } from "@/features/auth/lib/session";
 import { sendChatMessage } from "@/features/chat/services/chat.service";
 import type {
   ChatMessage,
+  ChatMessageRole,
   ChatProductItem,
   ChatStreamEvent,
 } from "@/features/chat/types";
@@ -31,6 +32,29 @@ function extractError(data: Record<string, unknown> | null): string | undefined 
   return typeof candidate === "string" ? candidate : undefined;
 }
 
+/**
+ * Lets another transport (the voice call) share this conversation: same
+ * session id (so the assistant keeps one memory) and same message list.
+ * Every function is stable for the lifetime of the hook.
+ */
+export interface ChatSessionBridge {
+  getSessionId: () => string | null;
+  setSessionId: (id: string | null) => void;
+  /** Inserts the message with this id, or patches it if it already exists. */
+  upsertMessage: (
+    id: string,
+    role: ChatMessageRole,
+    patch: Partial<Omit<ChatMessage, "id" | "role">>,
+  ) => void;
+  /**
+   * Attaches products to the latest assistant message; when that message
+   * already has products (or there is none), appends a cards-only message.
+   */
+  attachItems: (items: ChatProductItem[]) => void;
+  /** Subscribes to `reset()`; returns the unsubscribe function. */
+  onReset: (listener: () => void) => () => void;
+}
+
 export interface UseChatStream {
   messages: ChatMessage[];
   isStreaming: boolean;
@@ -38,6 +62,7 @@ export interface UseChatStream {
   send: (text: string) => void;
   stop: () => void;
   reset: () => void;
+  bridge: ChatSessionBridge;
 }
 
 export function useChatStream(): UseChatStream {
@@ -48,6 +73,7 @@ export function useChatStream(): UseChatStream {
   // Conversation session id (from the `session` event). A ref so `send` always
   // reads the latest value without being re-created.
   const sessionIdRef = useRef<string | null>(null);
+  const resetListenersRef = useRef(new Set<() => void>());
 
   // Abort any in-flight stream when the consumer unmounts.
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -60,11 +86,48 @@ export function useChatStream(): UseChatStream {
 
   const reset = useCallback(() => {
     stop();
+    // Lets the voice call hang up before the conversation is cleared.
+    resetListenersRef.current.forEach((listener) => listener());
     setMessages([]);
     setError(null);
     // Starts a brand-new conversation/session on the next message.
     sessionIdRef.current = null;
   }, [stop]);
+
+  const bridge = useMemo<ChatSessionBridge>(
+    () => ({
+      getSessionId: () => sessionIdRef.current,
+      setSessionId: (id) => {
+        sessionIdRef.current = id;
+      },
+      upsertMessage: (id, role, patch) =>
+        setMessages((prev) =>
+          prev.some((m) => m.id === id)
+            ? prev.map((m) => (m.id === id ? { ...m, ...patch } : m))
+            : [...prev, { id, role, content: "", ...patch }],
+        ),
+      attachItems: (items) => {
+        if (items.length === 0) return;
+        setMessages((prev) => {
+          const index = prev.findLastIndex((m) => m.role === "assistant");
+          if (index !== -1 && !prev[index].items?.length) {
+            return prev.map((m, i) => (i === index ? { ...m, items } : m));
+          }
+          return [
+            ...prev,
+            { id: createId(), role: "assistant", content: "", items, status: "done" },
+          ];
+        });
+      },
+      onReset: (listener) => {
+        resetListenersRef.current.add(listener);
+        return () => {
+          resetListenersRef.current.delete(listener);
+        };
+      },
+    }),
+    [],
+  );
 
   const send = useCallback(
     (text: string) => {
@@ -175,5 +238,5 @@ export function useChatStream(): UseChatStream {
     [isStreaming],
   );
 
-  return { messages, isStreaming, error, send, stop, reset };
+  return { messages, isStreaming, error, send, stop, reset, bridge };
 }

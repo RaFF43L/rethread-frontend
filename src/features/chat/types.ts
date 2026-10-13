@@ -48,4 +48,6 @@ export interface ChatMessage {
   items?: ChatProductItem[];
   status?: ChatMessageStatus;
   error?: string;
+  /** Set on transcripts from a voice call (shown with a small badge). */
+  via?: "voice";
 }
