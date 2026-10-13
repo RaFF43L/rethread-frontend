@@ -58,7 +58,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  return <ProductDetailClient product={product} />;
+  // Keyed by id: navigating between products reuses this route, and without a
+  // remount the carousel, image and share-URL state would stick to the first one.
+  return <ProductDetailClient key={id} product={product} />;
 }
 
 export const revalidate = 60;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import type { Product } from "@/shared/types";
 
 const RECENTLY_VIEWED_KEY = "segunda_aura_recently_viewed";
@@ -28,7 +28,9 @@ export function useRecentlyViewed() {
     setIsLoaded(true);
   }, []);
 
-  const addRecentlyViewed = (product: Pick<Product, "id" | "name" | "price" | "images">) => {
+  // Stable references: callers run these from effects (the product page adds the
+  // product on mount), and a new function per render would loop forever.
+  const addRecentlyViewed = useCallback((product: Pick<Product, "id" | "name" | "price" | "images">) => {
     setRecentlyViewed((prev) => {
       const filtered = prev.filter((item) => item.id !== product.id);
       const newItem: RecentlyViewedProduct = {
@@ -43,12 +45,12 @@ export function useRecentlyViewed() {
       localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updated));
       return updated;
     });
-  };
+  }, []);
 
-  const clearRecentlyViewed = () => {
+  const clearRecentlyViewed = useCallback(() => {
     setRecentlyViewed([]);
     localStorage.removeItem(RECENTLY_VIEWED_KEY);
-  };
+  }, []);
 
   return {
     recentlyViewed,
